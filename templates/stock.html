@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Stock</h3>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Producto</th>
+      <th>Cantidad</th>
+      <th>Costo</th>
+      <th>Envio unit.</th>
+      <th>Extra</th>
+      <th>Margen</th>
+      <th>Precio sugerido</th>
+      <th>Fotos</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in productos %}
+      <tr>
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.cantidad }}</td>
+        <td>${{ p.precio_compra }}</td>
+        <td>${{ p.costo_envio_unitario }}</td>
+        <td>${{ p.costo_extra }}</td>
+        <td>{{ (p.margen*100)|round(0) }}%</td>
+        <td><strong>${{ p.precio_sugerido }}</strong></td>
+        <td>
+          {% for f in p.fotos %}
+            <img src="{{ url_for('uploaded_file', filename=f.ruta) }}" style="width:80px; height:80px; object-fit:cover;" class="me-1 mb-1">
+          {% endfor %}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
