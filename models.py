@@ -5,7 +5,7 @@ db = SQLAlchemy()
 
 class Lote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    fecha = db.Column(db.DateTime, default=datetime.now)
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
     costo_envio = db.Column(db.Float, nullable=False, default=0.0)
     productos = db.relationship("Producto", back_populates="lote", cascade="all, delete-orphan")
 
@@ -16,7 +16,7 @@ class Producto(db.Model):
     precio_compra = db.Column(db.Float, nullable=False, default=0.0)
     costo_envio_unitario = db.Column(db.Float, default=0.0)
     costo_extra = db.Column(db.Float, default=0.0)
-    margen = db.Column(db.Float, default=0.5)  # 0.5 = 50%
+    margen = db.Column(db.Float, default=0.5)
     precio_sugerido = db.Column(db.Float, default=0.0)
     lote_id = db.Column(db.Integer, db.ForeignKey("lote.id"), nullable=True)
 
@@ -37,7 +37,7 @@ class FotoProducto(db.Model):
 class Venta(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
-    producto_id = db.Column(db.Integer, db.ForeignKey("producto.id"), nullable=True)  # puede ser NULL si se elimina producto
+    producto_id = db.Column(db.Integer, db.ForeignKey("producto.id"), nullable=True)
     cantidad = db.Column(db.Integer, nullable=False)
     precio_venta = db.Column(db.Float, nullable=False)
 

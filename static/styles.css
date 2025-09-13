@@ -1,0 +1,165 @@
+:root {
+  --bg: #f8f9fa;
+  --card: #ffffff;
+  --text: #212529;
+  --muted: #6c757d;
+  --accent: #0d6efd;
+  --accent-dark: #0b5ed7;
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #212529;
+  --sidebar-border: var(--accent);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  --btn-bg: var(--accent);
+  --btn-text: #ffffff;
+}
+
+.dark-mode {
+  --bg: #0a0f1c;
+  --card: #121a2b;
+  --text: #e6eef8;
+  --muted: #9aa6bd;
+  --accent: #66a5ff;
+  --accent-dark: #3d7ed9;
+  --sidebar-bg: #0f1724;
+  --sidebar-text: #e6eef8;
+  --sidebar-border: transparent;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+
+  --btn-bg: #2a3550;
+  --btn-text: #e6eef8;
+}
+
+/* Fondo general */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, Arial, sans-serif;
+  margin: 0;
+  line-height: 1.6;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Sidebar */
+#sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  transition: all 0.3s ease;
+  padding-bottom: 20px;
+  box-shadow: var(--shadow);
+  border-right: 4px solid var(--sidebar-border);
+}
+
+#sidebar.collapsed {
+  margin-left: -260px;
+}
+
+#sidebar .sidebar-header {
+  padding: 1rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--accent); /* 🔹 Ahora el título Stock App siempre resalta */
+}
+
+#sidebar ul {
+  padding-left: 0;
+  margin: 0;
+}
+
+#sidebar ul li {
+  list-style: none;
+}
+
+#sidebar ul li a {
+  color: var(--sidebar-text);
+  text-decoration: none;
+  display: block;
+  padding: 12px 20px;
+  border-radius: 8px;
+  transition: background 0.2s, padding-left 0.2s;
+}
+
+#sidebar ul li a:hover {
+  background: rgba(13, 110, 253, 0.08);
+  padding-left: 24px;
+}
+
+/* Contenido */
+#content {
+  flex: 1;
+  padding: 20px;
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  color: var(--text);
+  border: none;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Texto atenuado */
+.text-muted {
+  color: var(--muted) !important;
+}
+
+/* Navbar */
+.navbar {
+  background: var(--card);
+  box-shadow: var(--shadow);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  color: var(--text);
+}
+
+/* Botón de toggle theme */
+#theme-toggle {
+  font-size: 0.85rem;
+  border-radius: 8px;
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: var(--btn-bg);   /* 🔹 Color según tema */
+  color: var(--btn-text);      /* 🔹 Texto visible en ambos modos */
+  border: none;
+  transition: all 0.3s ease;
+}
+
+#theme-toggle:hover {
+  background: var(--accent-dark);
+  color: #fff;
+}
+
+/* Ajustes para listas */
+.list-group-item {
+  background: var(--card);
+  color: var(--text);
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
+/* Imágenes */
+.img-thumbnail {
+  border: 0;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+/* Animaciones suaves */
+a, button {
+  transition: all 0.2s ease;
+}

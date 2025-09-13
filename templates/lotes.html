@@ -1,43 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>Lotes</h2>
+<div class="d-flex justify-content-between mb-3">
+  <h3>Lotes</h3>
   <a class="btn btn-success" href="{{ url_for('add_lote') }}">Nuevo lote</a>
 </div>
-
 {% if lotes %}
-  <div class="row">
-  {% for lote in lotes %}
-    <div class="col-md-6 mb-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h5 class="card-title">Lote #{{ lote.id }}</h5>
-          <p class="card-text"><strong>Fecha:</strong> {{ lote.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
-          <p class="card-text"><strong>Costo envío:</strong> ${{ lote.costo_envio }}</p>
-          <a class="btn btn-primary btn-sm" href="{{ url_for('add_product', lote_id=lote.id) }}">Agregar producto</a>
-          <form method="post" action="{{ url_for('delete_lote', lote_id=lote.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar lote? Esto borrará sus productos y fotos')">
-            <button class="btn btn-danger btn-sm">Eliminar</button>
-          </form>
-          <hr>
-          <h6>Productos</h6>
-          {% if lote.productos %}
-            <div class="d-flex flex-wrap">
-            {% for p in lote.productos %}
-              <div class="me-3 mb-2 text-center">
-                <div class="small">{{ p.nombre }} (x{{ p.cantidad }})</div>
-                {% if p.fotos %}
-                  <img src="{{ url_for('uploaded_file', filename=p.fotos[0].ruta) }}" class="img-thumbnail" style="width:120px; height:120px; object-fit:cover;">
-                {% endif %}
+  <div class="row g-3">
+    {% for lote in lotes %}
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5>Lote #{{ lote.id }}</h5>
+            <p class="small text-muted">Fecha: {{ lote.fecha.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p>Costo envío: ${{ lote.costo_envio }}</p>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('add_product', lote_id=lote.id) }}">Agregar producto</a>
+            <form method="post" action="{{ url_for('delete_lote', lote_id=lote.id) }}" class="d-inline" onsubmit="return confirm('Eliminar lote?')">
+              <button class="btn btn-danger btn-sm">Eliminar lote</button>
+            </form>
+            <hr>
+            <h6>Productos</h6>
+            {% if lote.productos %}
+              <div class="d-flex flex-wrap">
+                {% for p in lote.productos %}
+                  <div class="me-3 text-center mb-2" style="width:140px;">
+                    <div class="small">{{ p.nombre }} (x{{ p.cantidad }})</div>
+                    {% if p.fotos %}
+                      <img src="{{ url_for('uploaded_file', filename=p.fotos[0].ruta) }}" class="img-thumbnail" style="width:120px; height:120px; object-fit:cover;">
+                    {% endif %}
+                    <div class="mt-1">
+                      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('ver_producto', producto_id=p.id) }}">Ver</a>
+                      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('editar_producto', producto_id=p.id) }}">Editar</a>
+                      <form method="post" action="{{ url_for('eliminar_producto', producto_id=p.id) }}" class="d-inline">
+                        <button class="btn btn-sm btn-danger" onclick="return confirm('Eliminar producto?')">Borrar</button>
+                      </form>
+                    </div>
+                  </div>
+                {% endfor %}
               </div>
-            {% endfor %}
-            </div>
-          {% else %}
-            <p class="text-muted">No hay productos en este lote.</p>
-          {% endif %}
+            {% else %}
+              <p class="text-muted">No hay productos.</p>
+            {% endif %}
+          </div>
         </div>
       </div>
-    </div>
-  {% endfor %}
+    {% endfor %}
   </div>
 {% else %}
   <p>No hay lotes creados.</p>

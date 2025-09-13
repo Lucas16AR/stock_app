@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center mb-4">
+  <img src="{{ url_for('static', filename='img/logo.png') }}" 
+       alt="Logo" width="100" height="100" 
+       class="mb-2 rounded-circle shadow">
+  <h2 class="fw-bold">Dashboard</h2>
+  <p class="text-muted">Resumen general de tu negocio</p>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm text-center">
+      <small class="text-muted">Total ventas</small>
+      <h3>{{ total_ventas }}</h3>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm text-center">
+      <small class="text-muted">Productos en stock</small>
+      <h3>{{ total_stock }}</h3>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm text-center">
+      <small class="text-muted">Lotes</small>
+      <h3>{{ total_lotes }}</h3>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card p-3 shadow-sm text-center">
+      <small class="text-muted">Ganancia estimada</small>
+      <h3>${{ ganancia_estimada }}</h3>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-8">
+    <div class="card p-3 shadow-sm">
+      <h5>Ventas por mes</h5>
+      <canvas id="ventasChart"></canvas>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3 shadow-sm">
+      <h5>Top productos por stock</h5>
+      <ul class="list-group list-group-flush">
+        {% for p in productos_stock %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ p.nombre }}
+            <span class="badge bg-primary rounded-pill">{{ p.cantidad }}</span>
+          </li>
+        {% else %}
+          <li class="list-group-item">No hay productos</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+const vCtx = document.getElementById('ventasChart');
+new Chart(vCtx, { 
+  type: 'line', 
+  data: { 
+    labels: {{ meses|tojson }}, 
+    datasets:[{ 
+      label:'Ventas', 
+      data: {{ ventas_mensuales|tojson }}, 
+      borderColor:'#0d6efd', 
+      tension:0.3 
+    }] 
+  } 
+});
+</script>
+{% endblock %}
