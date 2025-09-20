@@ -163,3 +163,14 @@ body {
 a, button {
   transition: all 0.2s ease;
 }
+
+/* 🔹 Ajusta el color de las ayudas en modo oscuro */
+.dark-mode .form-text {
+  color: #e0e0e0 !important; /* blanco/gris claro */
+}
+
+/* 🔹 Texto de ayuda en modo oscuro */
+.dark-mode .form-text,
+.dark-mode .form-check-label {
+  color: #e0e0e0 !important;
+}

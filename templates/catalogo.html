@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Catálogo de productos</h4>
+
+<!-- Filtro de categorías -->
+<div class="row mb-3">
+  <div class="col-md-4">
+    <form method="get" action="{{ url_for('catalogo') }}">
+      <select name="categoria" class="form-select" onchange="this.form.submit()">
+        <option value="">Todas las categorías</option>
+        {% for cat in categorias %}
+          <option value="{{ cat.id }}" {% if categoria_id==cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+</div>
+
+<!-- Catálogo en cards -->
+<div class="row">
+  {% for prod in productos %}
+  <div class="col-md-4 mb-4">
+    <div class="card h-100">
+
+      {% if prod.fotos|length > 1 %}
+      <!-- Carrusel de fotos -->
+      <div id="carousel-{{ prod.id }}" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          {% for f in prod.fotos %}
+          <div class="carousel-item {% if loop.first %}active{% endif %}">
+            <img src="{{ url_for('uploaded_file', filename=f.ruta) }}" 
+                 class="d-block w-100" 
+                 style="height:200px; object-fit:cover;">
+          </div>
+          {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ prod.id }}" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ prod.id }}" data-bs-slide="next">
+          <span class="carousel-control-next-icon"></span>
+        </button>
+      </div>
+      {% elif prod.fotos %}
+      <!-- Primera foto -->
+      <img src="{{ url_for('uploaded_file', filename=prod.fotos[0].ruta) }}" 
+           class="card-img-top" 
+           style="height:200px; object-fit:cover;">
+      {% else %}
+      <!-- Imagen por defecto -->
+      <img src="{{ url_for('static', filename='img/no-image.png') }}" 
+           class="card-img-top" 
+           style="height:200px; object-fit:cover;">
+      {% endif %}
+
+      <div class="card-body">
+        <h5 class="card-title">{{ prod.nombre }}</h5>
+        <p class="card-text">
+          <strong>Precio:</strong> ${{ "%.2f"|format(prod.precio_compra) }}<br>
+          <strong>Categorías:</strong>
+          {% for c in prod.categorias %}
+            <span class="badge bg-secondary">{{ c.nombre }}</span>
+          {% endfor %}
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
