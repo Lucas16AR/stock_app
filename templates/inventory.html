@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Stock</h4>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Producto</th>
+      <th>Cantidad</th>
+      <th>Costo</th>
+      <th>Envío</th>
+      <th>Extra</th>
+      <th>Margen</th>
+      <th>Precio sugerido</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in productos %}
+      <tr>
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.cantidad }}</td>
+        <td>${{ p.precio_compra or 0 }}</td>
+        <td>${{ p.costo_envio_unitario or 0 }}</td>
+        <td>${{ p.costo_extra or 0 }}</td>
+        <td>{{ ((p.margen or 0)*100)|round(0) }}%</td>
+        <td><strong>${{ p.precio_sugerido }}</strong></td>
+        <td>
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('product_detail', product_id=p.id) }}">Ver</a>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('product_edit', product_id=p.id) }}">Editar</a>
+        </td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="8" class="text-center">No hay productos cargados</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

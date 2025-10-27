@@ -20,14 +20,14 @@
       </div>
       <ul class="list-unstyled components">
         <li><a href="{{ url_for('dashboard') }}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
-        <li><a href="{{ url_for('lotes') }}"><i class="bi bi-box-seam me-2"></i> Lotes</a></li>
-        <li><a href="{{ url_for('productos') }}"><i class="bi bi-bag me-2"></i> Productos</a></li>
-        <li><a href="{{ url_for('ventas') }}"><i class="bi bi-cash-coin me-2"></i> Ventas</a></li>
-        <li><a href="{{ url_for('stock') }}"><i class="bi bi-archive me-2"></i> Stock</a></li>
+        <li><a href="{{ url_for('batches') }}"><i class="bi bi-box-seam me-2"></i> Lotes</a></li>
+        <li><a href="{{ url_for('products') }}"><i class="bi bi-bag me-2"></i> Productos</a></li>
+        <li><a href="{{ url_for('sales') }}"><i class="bi bi-cash-coin me-2"></i> Ventas</a></li>
+        <li><a href="{{ url_for('catalog') }}"><i class="bi bi-archive me-2"></i> Stock</a></li>
         <!-- 🔹 Nuevo acceso a Categorías -->
-        <li><a href="{{ url_for('categorias') }}"><i class="bi bi-tags me-2"></i> Categorías</a></li>
+        <li><a href="{{ url_for('categories') }}"><i class="bi bi-tags me-2"></i> Categorías</a></li>
         <!-- 🔹 Nuevo acceso al Catálogo -->
-        <li><a href="{{ url_for('catalogo') }}"><i class="bi bi-shop me-2"></i> Catálogo</a></li>
+        <li><a href="{{ url_for('catalog') }}"><i class="bi bi-shop me-2"></i> Catálogo</a></li>
       </ul>
       <div class="p-3">
         <button id="theme-toggle" class="btn btn-sm btn-outline-light w-100">Toggle dark</button>

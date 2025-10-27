@@ -75,7 +75,7 @@
             <div class="me-2 mb-2 text-center">
               <img src="{{ url_for('uploaded_file', filename=foto.ruta) }}" 
                    alt="Foto" style="height:100px; object-fit:cover; border:1px solid #ccc; border-radius:5px;">
-              <form method="post" action="{{ url_for('eliminar_foto', foto_id=foto.id) }}" style="display:inline;">
+              <form method="post" action="{{ url_for('photo_delete', photo_id=photo.id) }}" style="display:inline;">
                 <button class="btn btn-sm btn-danger mt-1">Eliminar</button>
               </form>
             </div>

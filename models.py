@@ -10,8 +10,8 @@ producto_categoria = db.Table(
     db.Column("categoria_id", db.Integer, db.ForeignKey("categoria.id"), primary_key=True),
 )
 
-
 class Lote(db.Model):
+    __tablename__ = "lote"
     id = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
     costo_envio = db.Column(db.Float, nullable=False, default=0.0)
@@ -21,8 +21,8 @@ class Lote(db.Model):
     def __repr__(self):
         return f"<Lote {self.id} - {self.fecha.strftime('%Y-%m-%d')}>"
 
-
 class Categoria(db.Model):
+    __tablename__ = "categoria"
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), unique=True, nullable=False)
 
@@ -35,8 +35,8 @@ class Categoria(db.Model):
     def __repr__(self):
         return f"<Categoria {self.nombre}>"
 
-
 class Producto(db.Model):
+    __tablename__ = "producto"
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(150), nullable=False)
     cantidad = db.Column(db.Integer, default=0)
@@ -44,6 +44,7 @@ class Producto(db.Model):
     costo_envio_unitario = db.Column(db.Float, default=0.0)
     costo_extra = db.Column(db.Float, default=0.0)
     margen = db.Column(db.Float, default=0.5)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
     lote_id = db.Column(db.Integer, db.ForeignKey("lote.id"), nullable=True)
 
     lote = db.relationship("Lote", back_populates="productos")
@@ -61,7 +62,21 @@ class Producto(db.Model):
         """Calcula siempre el precio sugerido en base a costos + margen."""
         costo_total = (self.precio_compra or 0) + (self.costo_envio_unitario or 0) + (self.costo_extra or 0)
         return round(costo_total * (1 + (self.margen or 0)), 2)
+    
+    @property
+    def costo_total(self):
+        return (self.precio_compra or 0) + (self.costo_envio_unitario or 0) + (self.costo_extra or 0)
+    
+    @property
+    def stock(self):
+        return self.cantidad
 
+    @db.validates("margen")
+    def validate_margen(self, key, value):
+        if not (0 <= value <= 1):
+            raise ValueError("El margen debe estar entre 0 y 1")
+        return value
+    
     def add_foto(self, foto):
         """Agrega una foto si el producto tiene menos de 4."""
         if len(self.fotos) >= 4:
@@ -70,7 +85,6 @@ class Producto(db.Model):
 
     def __repr__(self):
         return f"<Producto {self.nombre} (Stock: {self.cantidad})>"
-
 
 class FotoProducto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -82,8 +96,8 @@ class FotoProducto(db.Model):
     def __repr__(self):
         return f"<Foto {self.ruta}>"
 
-
 class Venta(db.Model):
+    __tablename__ = "venta"
     id = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
     producto_id = db.Column(db.Integer, db.ForeignKey("producto.id"), nullable=False)  # 🔒 siempre debe tener producto
