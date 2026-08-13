@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/SignOutButton";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV = [
   { href: "/admin", label: "Dashboard" },
@@ -18,14 +19,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   } = await supabase.auth.getUser();
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
-      <header className="border-b border-neutral-800 bg-neutral-900">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link href="/admin" className="font-display text-xl text-neutral-50">
-            GORRAS<span className="text-accent">.</span> admin
+          <Link href="/admin" className="font-display text-xl text-foreground">
+            INDY CAPS<span className="text-accent">.</span> admin
           </Link>
-          <div className="flex items-center gap-3 text-sm text-neutral-400">
+          <div className="flex items-center gap-3 text-sm text-muted">
             <span className="hidden sm:inline">{user?.email}</span>
+            <ThemeToggle />
             <SignOutButton />
           </div>
         </div>
@@ -34,7 +36,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link
               key={item.href}
               href={item.href}
-              className="whitespace-nowrap rounded-lg px-3 py-1.5 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50"
+              className="whitespace-nowrap rounded-lg px-3 py-1.5 text-muted hover:bg-hover hover:text-foreground"
             >
               {item.label}
             </Link>

@@ -18,10 +18,10 @@ export default async function LotesPage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl text-neutral-50">Lotes de compra</h1>
+        <h1 className="font-display text-2xl text-foreground">Lotes de compra</h1>
         <Link
           href="/admin/lotes/nuevo"
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-neutral-950"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white"
         >
           + Nuevo lote
         </Link>
@@ -31,21 +31,21 @@ export default async function LotesPage() {
         {lotes.map((l) => (
           <div
             key={l.id}
-            className="flex items-center justify-between rounded-2xl bg-neutral-900 p-4 ring-1 ring-neutral-800"
+            className="flex items-center justify-between rounded-2xl bg-card p-4 ring-1 ring-border"
           >
             <div>
-              <p className="font-medium text-neutral-100">
+              <p className="font-medium text-foreground">
                 Lote #{l.id} — {new Date(l.fecha).toLocaleDateString("es-AR")}
               </p>
-              <p className="text-sm text-neutral-400">
+              <p className="text-sm text-muted">
                 Costo de envío: {formatARS(l.costo_envio)} · {l.productos?.length ?? 0} producto(s)
               </p>
-              {l.nota && <p className="text-sm text-neutral-500">{l.nota}</p>}
+              {l.nota && <p className="text-sm text-muted">{l.nota}</p>}
             </div>
             <div className="flex gap-2">
               <Link
                 href={`/admin/lotes/${l.id}`}
-                className="rounded-lg border border-neutral-700 px-3 py-1 text-sm text-neutral-300 hover:bg-neutral-800"
+                className="rounded-lg border border-input-border px-3 py-1 text-sm text-muted hover:bg-hover"
               >
                 Editar
               </Link>
@@ -55,7 +55,7 @@ export default async function LotesPage() {
                   await eliminarLote(l.id);
                 }}
               >
-                <button className="rounded-lg border border-red-900 px-3 py-1 text-sm text-red-400 hover:bg-red-950">
+                <button className="rounded-lg border border-red-300 dark:border-red-900 px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">
                   Eliminar
                 </button>
               </form>
@@ -63,7 +63,7 @@ export default async function LotesPage() {
           </div>
         ))}
         {lotes.length === 0 && (
-          <p className="rounded-2xl bg-neutral-900 p-8 text-center text-neutral-500 ring-1 ring-neutral-800">
+          <p className="rounded-2xl bg-card p-8 text-center text-muted ring-1 ring-border">
             Todavía no cargaste lotes.
           </p>
         )}

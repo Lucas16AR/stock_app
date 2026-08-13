@@ -27,7 +27,7 @@ export default async function EditarProductoPage(
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-neutral-50">Editar producto</h1>
+      <h1 className="font-display text-2xl text-foreground">Editar producto</h1>
       <div className="mt-4">
         <ProductForm
           producto={producto}

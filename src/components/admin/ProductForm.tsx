@@ -19,72 +19,72 @@ export default function ProductForm({
   return (
     <form action={action} className="flex max-w-2xl flex-col gap-4">
       <div>
-        <label className="mb-1 block text-xs text-neutral-400">Nombre *</label>
+        <label className="mb-1 block text-xs text-muted">Nombre *</label>
         <input
           name="nombre"
           required
           defaultValue={producto?.nombre}
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
         />
       </div>
 
       <div>
-        <label className="mb-1 block text-xs text-neutral-400">Descripción</label>
+        <label className="mb-1 block text-xs text-muted">Descripción</label>
         <textarea
           name="descripcion"
           rows={3}
           defaultValue={producto?.descripcion ?? ""}
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div>
-          <label className="mb-1 block text-xs text-neutral-400">Stock *</label>
+          <label className="mb-1 block text-xs text-muted">Stock *</label>
           <input
             type="number"
             name="cantidad"
             min={0}
             required
             defaultValue={producto?.cantidad ?? 0}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-neutral-400">Precio compra</label>
+          <label className="mb-1 block text-xs text-muted">Precio compra</label>
           <input
             type="number"
             step="0.01"
             name="precio_compra"
             defaultValue={producto?.precio_compra ?? 0}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-neutral-400">Envío unitario</label>
+          <label className="mb-1 block text-xs text-muted">Envío unitario</label>
           <input
             type="number"
             step="0.01"
             name="costo_envio_unitario"
             defaultValue={producto?.costo_envio_unitario ?? 0}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-neutral-400">Costo extra</label>
+          <label className="mb-1 block text-xs text-muted">Costo extra</label>
           <input
             type="number"
             step="0.01"
             name="costo_extra"
             defaultValue={producto?.costo_extra ?? 0}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="mb-1 block text-xs text-neutral-400">
+          <label className="mb-1 block text-xs text-muted">
             Margen (0.5 = 50%)
           </label>
           <input
@@ -94,15 +94,15 @@ export default function ProductForm({
             max={5}
             name="margen"
             defaultValue={producto?.margen ?? 0.5}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-neutral-400">Lote</label>
+          <label className="mb-1 block text-xs text-muted">Lote</label>
           <select
             name="lote_id"
             defaultValue={producto?.lote_id ?? ""}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
           >
             <option value="">Sin lote</option>
             {lotes.map((l) => (
@@ -115,10 +115,10 @@ export default function ProductForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-xs text-neutral-400">Categorías</label>
+        <label className="mb-1 block text-xs text-muted">Categorías</label>
         <div className="flex flex-wrap gap-3">
           {categorias.map((c) => (
-            <label key={c.id} className="flex items-center gap-1.5 text-sm text-neutral-300">
+            <label key={c.id} className="flex items-center gap-1.5 text-sm text-muted">
               <input
                 type="checkbox"
                 name="categorias"
@@ -129,12 +129,12 @@ export default function ProductForm({
             </label>
           ))}
           {categorias.length === 0 && (
-            <p className="text-sm text-neutral-500">No hay categorías creadas todavía.</p>
+            <p className="text-sm text-muted">No hay categorías creadas todavía.</p>
           )}
         </div>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-neutral-300">
+      <label className="flex items-center gap-2 text-sm text-muted">
         <input
           type="checkbox"
           name="visible_publico"
@@ -145,7 +145,7 @@ export default function ProductForm({
 
       {producto && producto.fotos_producto && producto.fotos_producto.length > 0 && (
         <div>
-          <label className="mb-1 block text-xs text-neutral-400">Fotos actuales</label>
+          <label className="mb-1 block text-xs text-muted">Fotos actuales</label>
           <div className="flex flex-wrap gap-3">
             {producto.fotos_producto.map((f) => (
               <div key={f.id} className="relative">
@@ -153,7 +153,7 @@ export default function ProductForm({
                 <img
                   src={fotoUrl(SUPABASE_URL, f.path)}
                   alt=""
-                  className="h-24 w-24 rounded-lg object-cover ring-1 ring-neutral-800"
+                  className="h-24 w-24 rounded-lg object-cover ring-1 ring-border"
                 />
                 <form
                   action={async () => {
@@ -173,7 +173,7 @@ export default function ProductForm({
       )}
 
       <div>
-        <label className="mb-1 block text-xs text-neutral-400">
+        <label className="mb-1 block text-xs text-muted">
           Agregar fotos (máx. 4 en total)
         </label>
         <input
@@ -181,13 +181,13 @@ export default function ProductForm({
           name="fotos"
           multiple
           accept="image/*"
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-300"
+          className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm text-muted"
         />
       </div>
 
       <button
         type="submit"
-        className="mt-2 rounded-lg bg-accent px-4 py-2 font-semibold text-neutral-950"
+        className="mt-2 rounded-lg bg-accent px-4 py-2 font-semibold text-white"
       >
         Guardar producto
       </button>

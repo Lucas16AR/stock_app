@@ -16,8 +16,8 @@ export default function CategoryFilter({
         href="/"
         className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
           !activa
-            ? "bg-accent text-neutral-950"
-            : "bg-neutral-900 text-neutral-300 ring-1 ring-neutral-800 hover:ring-accent"
+            ? "bg-accent text-white"
+            : "bg-card text-muted ring-1 ring-border hover:ring-accent"
         }`}
       >
         Todas
@@ -28,8 +28,8 @@ export default function CategoryFilter({
           href={`/?categoria=${c.id}`}
           className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
             activa === c.id
-              ? "bg-accent text-neutral-950"
-              : "bg-neutral-900 text-neutral-300 ring-1 ring-neutral-800 hover:ring-accent"
+              ? "bg-accent text-white"
+              : "bg-card text-muted ring-1 ring-border hover:ring-accent"
           }`}
         >
           {c.nombre}

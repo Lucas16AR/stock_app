@@ -36,11 +36,11 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-neutral-50">Dashboard</h1>
+      <h1 className="font-display text-2xl text-foreground">Dashboard</h1>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-2xl bg-neutral-900 p-4 ring-1 ring-neutral-800">
-            <p className="text-xs text-neutral-400">{s.label}</p>
+          <div key={s.label} className="rounded-2xl bg-card p-4 ring-1 ring-border">
+            <p className="text-xs text-muted">{s.label}</p>
             <p className="mt-1 font-display text-2xl text-accent">{s.value}</p>
           </div>
         ))}

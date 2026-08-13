@@ -18,14 +18,14 @@ export default function VentaForm({ productos }: { productos: Producto[] }) {
   return (
     <form
       action={formAction}
-      className="grid max-w-2xl grid-cols-1 gap-3 rounded-2xl bg-neutral-900 p-4 ring-1 ring-neutral-800 sm:grid-cols-3"
+      className="grid max-w-2xl grid-cols-1 gap-3 rounded-2xl bg-card p-4 ring-1 ring-border sm:grid-cols-3"
     >
       <div className="sm:col-span-3">
-        <label className="mb-1 block text-xs text-neutral-400">Producto</label>
+        <label className="mb-1 block text-xs text-muted">Producto</label>
         <select
           name="producto_id"
           required
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
           onChange={(e) => {
             const opt = e.target.selectedOptions[0];
             const precioInput = e.currentTarget.form?.elements.namedItem(
@@ -45,37 +45,37 @@ export default function VentaForm({ productos }: { productos: Producto[] }) {
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-xs text-neutral-400">Cantidad</label>
+        <label className="mb-1 block text-xs text-muted">Cantidad</label>
         <input
           type="number"
           name="cantidad"
           min={1}
           required
           defaultValue={1}
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs text-neutral-400">Precio de venta</label>
+        <label className="mb-1 block text-xs text-muted">Precio de venta</label>
         <input
           type="number"
           step="0.01"
           name="precio_venta"
           required
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
         />
       </div>
       <div className="flex items-end">
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-lg bg-accent px-4 py-2 font-semibold text-neutral-950 disabled:opacity-60"
+          className="w-full rounded-lg bg-accent px-4 py-2 font-semibold text-white disabled:opacity-60"
         >
           {pending ? "Registrando..." : "Registrar venta"}
         </button>
       </div>
       {state?.error && (
-        <p className="sm:col-span-3 text-sm text-red-400">{state.error}</p>
+        <p className="sm:col-span-3 text-sm text-red-600 dark:text-red-400">{state.error}</p>
       )}
     </form>
   );

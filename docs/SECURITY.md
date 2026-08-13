@@ -23,16 +23,26 @@ secreto de esa clave. Es el mismo modelo que usan Firebase, Clerk, Stripe
 ## Qué se revisó
 
 ### 1. Row Level Security (Postgres)
-Se releyeron las políticas activas en la base directamente desde Supabase.
-Confirmado:
-- Lectura pública (rol `anon`): solo `productos` con `visible_publico =
-  true AND cantidad > 0`, más sus fotos y categorías. Los productos
-  ocultos o sin stock **no son alcanzables ni adivinando el ID** — la
-  restricción es a nivel de base, no de código de la app.
-- Escritura (`insert`/`update`/`delete`) en las 6 tablas: solo con
+Políticas leídas directamente de `pg_policies` en la base en vivo
+(2026-08-13). Confirmado:
+- **Escritura** (`insert`/`update`/`delete`) en las 6 tablas: solo con
   `auth.role() = 'authenticated'`, es decir, con sesión de Supabase Auth
   válida. Un visitante anónimo no puede crear, editar ni borrar nada aunque
-  llame a los endpoints directamente.
+  llame a los endpoints directamente. ✅
+- **`productos`**, lectura pública: `visible_publico = true AND cantidad >
+  0`. Los productos ocultos o sin stock **no son alcanzables ni adivinando
+  el ID** — la restricción es a nivel de base, no de código de la app. ✅
+- **`ventas` y `lotes`**: no tienen ninguna política de lectura pública.
+  Los datos de ventas y costos de compra son inaccesibles para anónimos. ✅
+
+**Desviación encontrada** (pendiente, ver abajo): `fotos_producto`,
+`producto_categoria` y `categorias` tienen lectura pública **incondicional**
+(`USING (true)`), no restringida a los productos visibles. Como el bucket
+de Storage es de lectura pública, un anónimo que consulte
+`fotos_producto` obtiene los `path` de las fotos de **todos** los
+productos — incluidos los ocultos o sin stock — y puede descargarlas.
+No expone ventas, costos ni credenciales, pero contradice la intención
+del diseño (que un producto oculto sea realmente invisible).
 
 ### 2. Server Actions llamadas directamente (sin pasar por la UI)
 En Next.js, las Server Actions son técnicamente endpoints POST que se
@@ -72,10 +82,12 @@ deshabilitando cámara/micrófono/ubicación (no se usan).
   incorrectos") tanto si el email no existe como si la contraseña está
   mal — no revela qué emails tienen cuenta.
 - Supabase Auth tiene rate-limiting propio en el endpoint de login.
-- **Pendiente (manual, 1 minuto)**: activar "Leaked Password Protection"
-  en el dashboard de Supabase → Authentication → Providers → Email. Chequea
-  la contraseña contra la base de HaveIBeenPwned al crear/cambiar
-  contraseña. No se puede activar por SQL/API, es un toggle del dashboard.
+- "Leaked Password Protection" (chequeo contra HaveIBeenPwned) está
+  **desactivado** — confirmado por el security advisor de Supabase, que lo
+  reporta como WARN. **No es un toggle de 1 minuto como se creyó en un
+  principio: requiere plan Pro** y el proyecto está en el free tier. No es
+  crítico: la capa de autorización real es RLS, no la contraseña por sí
+  sola. [Documentación](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)
 
 ## Resumen de cambios aplicados en este repo
 - `src/app/admin/(panel)/actions.ts`: validación server-side de tipo y
@@ -83,10 +95,31 @@ deshabilitando cámara/micrófono/ubicación (no se usan).
 - `next.config.ts`: headers de seguridad HTTP.
 
 ## Pendiente para vos
-1. Activar "Leaked Password Protection" en Supabase (dashboard, 1 minuto).
+1. **Cerrar la lectura pública de `fotos_producto`** (ver "Desviación
+   encontrada" arriba). Las fotos de productos ocultos o sin stock hoy son
+   descargables por cualquiera que consulte la tabla. SQL propuesto:
+
+   ```sql
+   drop policy if exists public_read_fotos on public.fotos_producto;
+   create policy public_read_fotos on public.fotos_producto
+     for select using (
+       exists (
+         select 1 from public.productos p
+         where p.id = fotos_producto.producto_id
+           and p.visible_publico = true
+           and p.cantidad > 0
+       )
+     );
+   ```
+
+   El panel admin no se ve afectado (la política `admin_all_fotos` cubre
+   `ALL` para `authenticated`). Lo mismo aplica a `producto_categoria` si
+   querés que las categorías de un producto oculto tampoco se filtren.
 2. Elegir una contraseña de admin robusta si no lo era ya (la que
    pusiste al principio es corta — considerá cambiarla desde el dashboard
-   de Supabase → Authentication → Users, editando el usuario).
+   de Supabase → Authentication → Users, editando el usuario). Tené en
+   cuenta que el chequeo contra HaveIBeenPwned no está disponible en el
+   plan free.
 3. Si en algún momento agregás más admins o das acceso a alguien más,
    recordá que cualquier usuario autenticado tiene acceso total (no hay
    roles/permisos diferenciados todavía) — avisame si en el futuro

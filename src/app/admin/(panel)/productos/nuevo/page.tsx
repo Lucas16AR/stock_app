@@ -12,7 +12,7 @@ export default async function NuevoProductoPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-neutral-50">Nuevo producto</h1>
+      <h1 className="font-display text-2xl text-foreground">Nuevo producto</h1>
       <div className="mt-4">
         <ProductForm categorias={categorias ?? []} lotes={lotes ?? []} action={crearProducto} />
       </div>

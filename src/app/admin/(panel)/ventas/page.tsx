@@ -19,15 +19,15 @@ export default async function VentasPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-neutral-50">Ventas</h1>
+      <h1 className="font-display text-2xl text-foreground">Ventas</h1>
 
       <div className="mt-4">
         <VentaForm productos={productos ?? []} />
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-2xl ring-1 ring-neutral-800">
+      <div className="mt-6 overflow-x-auto rounded-2xl ring-1 ring-border">
         <table className="w-full text-left text-sm">
-          <thead className="bg-neutral-900 text-neutral-400">
+          <thead className="bg-card text-muted">
             <tr>
               <th className="px-4 py-2">Fecha</th>
               <th className="px-4 py-2">Producto</th>
@@ -38,11 +38,11 @@ export default async function VentasPage() {
           </thead>
           <tbody>
             {((ventas ?? []) as (Venta & { productos: { nombre: string } | null })[]).map((v) => (
-              <tr key={v.id} className="border-t border-neutral-800">
-                <td className="px-4 py-2 text-neutral-400">
+              <tr key={v.id} className="border-t border-border bg-card">
+                <td className="px-4 py-2 text-muted">
                   {new Date(v.fecha).toLocaleDateString("es-AR")}
                 </td>
-                <td className="px-4 py-2 text-neutral-100">{v.productos?.nombre ?? "-"}</td>
+                <td className="px-4 py-2 text-foreground">{v.productos?.nombre ?? "-"}</td>
                 <td className="px-4 py-2">{v.cantidad}</td>
                 <td className="px-4 py-2">{formatARS(v.precio_venta)}</td>
                 <td className="px-4 py-2 text-accent">{formatARS(v.precio_venta * v.cantidad)}</td>
@@ -50,7 +50,7 @@ export default async function VentasPage() {
             ))}
             {(!ventas || ventas.length === 0) && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">
+                <td colSpan={5} className="px-4 py-8 text-center text-muted">
                   Todavía no hay ventas registradas.
                 </td>
               </tr>

@@ -14,14 +14,38 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Gorras Showroom",
-  description: "Catálogo de gorras disponibles",
+  title: "Indy Caps",
+  description: "Catálogo de gorras disponibles — Indy Caps",
 };
+
+// Corre antes de pintar la página para evitar el flash del tema
+// equivocado (ej: cargar en claro y "saltar" a oscuro un instante
+// después). No usa hooks de React a propósito: tiene que ejecutarse
+// sincrónicamente antes de la hidratación.
+const THEME_INIT_SCRIPT = `
+(function () {
+  try {
+    var stored = localStorage.getItem("theme");
+    var dark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.classList.toggle("dark", dark);
+  } catch (e) {}
+})();
+`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es" className={`${display.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-neutral-950 text-neutral-100">
+    <html
+      lang="es"
+      className={`${display.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body
+        className="min-h-full flex flex-col bg-background text-foreground"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

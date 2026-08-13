@@ -11,16 +11,16 @@ export default async function CategoriasPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-neutral-50">Categorías</h1>
+      <h1 className="font-display text-2xl text-foreground">Categorías</h1>
 
       <form action={crearCategoria} className="mt-4 flex max-w-md gap-2">
         <input
           name="nombre"
           required
           placeholder="Nombre de la categoría"
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
         />
-        <button className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-neutral-950">
+        <button className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white">
           Agregar
         </button>
       </form>
@@ -29,23 +29,23 @@ export default async function CategoriasPage() {
         {categorias.map((c) => (
           <div
             key={c.id}
-            className="flex items-center justify-between rounded-xl bg-neutral-900 px-4 py-2 ring-1 ring-neutral-800"
+            className="flex items-center justify-between rounded-xl bg-card px-4 py-2 ring-1 ring-border"
           >
-            <span className="text-neutral-100">{c.nombre}</span>
+            <span className="text-foreground">{c.nombre}</span>
             <form
               action={async () => {
                 "use server";
                 await eliminarCategoria(c.id);
               }}
             >
-              <button className="rounded-lg border border-red-900 px-3 py-1 text-sm text-red-400 hover:bg-red-950">
+              <button className="rounded-lg border border-red-300 dark:border-red-900 px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950">
                 Eliminar
               </button>
             </form>
           </div>
         ))}
         {categorias.length === 0 && (
-          <p className="rounded-2xl bg-neutral-900 p-8 text-center text-neutral-500 ring-1 ring-neutral-800">
+          <p className="rounded-2xl bg-card p-8 text-center text-muted ring-1 ring-border">
             Todavía no hay categorías.
           </p>
         )}

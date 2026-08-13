@@ -15,7 +15,7 @@ export default async function EditarLotePage(props: PageProps<"/admin/lotes/[id]
 
   return (
     <div>
-      <h1 className="font-display text-2xl text-neutral-50">Editar lote #{lote.id}</h1>
+      <h1 className="font-display text-2xl text-foreground">Editar lote #{lote.id}</h1>
       <div className="mt-4">
         <LoteForm lote={lote} action={actualizarConId} />
       </div>

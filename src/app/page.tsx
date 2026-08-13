@@ -38,17 +38,17 @@ export default async function HomePage(props: PageProps<"/">) {
       <SiteHeader />
       <main className="mx-auto w-full max-w-5xl flex-1 px-2 pb-10">
         <div className="px-2 pt-6">
-          <h1 className="font-display text-3xl text-neutral-50">
+          <h1 className="font-display text-3xl text-foreground">
             Gorras disponibles
           </h1>
-          <p className="mt-1 text-sm text-neutral-400">
+          <p className="mt-1 text-sm text-muted">
             Tocá una gorra para ver fotos y consultar por WhatsApp.
           </p>
         </div>
         <CategoryFilter categorias={categorias ?? []} activa={categoriaId} />
 
         {productosFiltrados.length === 0 ? (
-          <p className="px-4 py-16 text-center text-neutral-500">
+          <p className="px-4 py-16 text-center text-muted">
             No hay gorras disponibles por el momento. Volvé a pasar pronto 🧢
           </p>
         ) : (
@@ -59,8 +59,8 @@ export default async function HomePage(props: PageProps<"/">) {
           </div>
         )}
       </main>
-      <footer className="border-t border-neutral-800 py-6 text-center text-xs text-neutral-600">
-        © {new Date().getFullYear()} Gorras Showroom
+      <footer className="border-t border-border py-6 text-center text-xs text-muted">
+        © {new Date().getFullYear()} Indy Caps
       </footer>
     </>
   );

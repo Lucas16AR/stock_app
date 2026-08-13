@@ -49,10 +49,30 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
 - `revalidatePath` se llama después de cada mutación relevante (incluyendo
   siempre `"/"` cuando afecta al showroom público).
 
+## Marca y temas (INDY CAPS)
+
+- La identidad visual es **INDY CAPS**: acento rojo `#d6301f`, tipografía
+  display Bebas Neue + Inter. Los logos están en `public/brand/`
+  (`mark.png` isotipo para los headers, `logo.png` completo para el login).
+- El sitio tiene **modo claro y oscuro**. Los colores viven como tokens en
+  `src/app/globals.css` (`--background`, `--foreground`, `--card`,
+  `--border`, `--input-border`, `--muted`, `--hover`, `--accent`), con los
+  valores del modo oscuro bajo `.dark`. El variant se declara con
+  `@custom-variant dark (&:where(.dark, .dark *))`.
+- **No uses colores fijos en los componentes** (ni `bg-neutral-900` ni
+  `bg-[#f5f2ec]`): usá las clases de token (`bg-background`,
+  `text-foreground`, `bg-card`, `border-border`, `text-muted`, etc.), así
+  un solo cambio de clase en `<html>` repinta todo el sitio.
+- `src/components/ThemeToggle.tsx` alterna la clase `dark` en `<html>` y
+  guarda la preferencia en `localStorage`. Está en el header del showroom,
+  el del panel admin y el login.
+- `src/app/layout.tsx` tiene un script inline que aplica el tema guardado
+  (o el del sistema vía `prefers-color-scheme`) **antes** de pintar, para
+  evitar el flash de tema equivocado. Si tocás el layout, no lo saques.
+
 ## Estado del deploy
 
-Pensado para Vercel. Al momento de escribir esto, el deploy automático
-falló por falta de permisos en la cuenta de Vercel conectada ("You don't
-have permission to create a project"). Revisar rol en el team de Vercel
-(Settings → Members) antes de reintentar, o crear el proyecto manualmente
-importando este repo desde el dashboard de Vercel.
+En producción en Vercel: **https://stock-app-six-woad.vercel.app**
+El proyecto se importó manualmente desde el dashboard de Vercel (el
+conector automático no tenía permisos para crear proyectos). Cada push a
+`master` redeploya solo.

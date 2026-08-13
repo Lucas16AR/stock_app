@@ -17,15 +17,15 @@ export default async function InventarioPage() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-2xl text-neutral-50">Inventario</h1>
-        <p className="text-sm text-neutral-400">
+        <h1 className="font-display text-2xl text-foreground">Inventario</h1>
+        <p className="text-sm text-muted">
           Valor total en costo: <span className="text-accent">{formatARS(valorInventario)}</span>
         </p>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl ring-1 ring-neutral-800">
+      <div className="mt-4 overflow-x-auto rounded-2xl ring-1 ring-border">
         <table className="w-full text-left text-sm">
-          <thead className="bg-neutral-900 text-neutral-400">
+          <thead className="bg-card text-muted">
             <tr>
               <th className="px-4 py-2">Producto</th>
               <th className="px-4 py-2">Stock</th>
@@ -36,9 +36,9 @@ export default async function InventarioPage() {
           </thead>
           <tbody>
             {productos.map((p) => (
-              <tr key={p.id} className="border-t border-neutral-800">
-                <td className="px-4 py-2 text-neutral-100">{p.nombre}</td>
-                <td className={`px-4 py-2 ${p.cantidad <= 2 ? "text-red-400" : ""}`}>
+              <tr key={p.id} className="border-t border-border bg-card">
+                <td className="px-4 py-2 text-foreground">{p.nombre}</td>
+                <td className={`px-4 py-2 ${p.cantidad <= 2 ? "text-red-600 dark:text-red-400" : ""}`}>
                   {p.cantidad}
                 </td>
                 <td className="px-4 py-2">{formatARS(costoTotal(p))}</td>
@@ -48,7 +48,7 @@ export default async function InventarioPage() {
             ))}
             {productos.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-neutral-500">
+                <td colSpan={5} className="px-4 py-8 text-center text-muted">
                   No hay productos cargados.
                 </td>
               </tr>

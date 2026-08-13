@@ -14,7 +14,7 @@ export default function SignOutButton() {
         router.push("/admin/login");
         router.refresh();
       }}
-      className="rounded-lg border border-neutral-700 px-3 py-1.5 text-neutral-300 hover:bg-neutral-800"
+      className="rounded-lg border border-input-border px-3 py-1.5 text-muted hover:bg-hover"
     >
       Salir
     </button>
