@@ -33,9 +33,17 @@ precio_sugerido = costo_total * (1 + margen)
 
 Todas las tablas tienen RLS habilitado:
 
-- **Lectura pública** (rol `anon`): `categorias`, `producto_categoria`,
-  `fotos_producto` sin restricción; `productos` solo donde
-  `visible_publico = true AND cantidad > 0`.
+- **Lectura pública** (rol `anon`):
+  - `productos`: solo donde `visible_publico = true AND cantidad > 0`.
+  - `fotos_producto` y `producto_categoria`: solo las filas cuyo producto
+    padre cumple esa misma condición (la política hace un `exists` contra
+    `productos`). Antes eran `USING (true)`, lo que filtraba las fotos de
+    productos ocultos o sin stock — ver `docs/SECURITY.md`.
+  - `categorias`: sin restricción, a propósito. El showroom la consulta
+    suelta para armar el filtro de categorías y los nombres no son
+    sensibles.
+- **Sin lectura pública**: `ventas` y `lotes` (datos de venta y costos de
+  compra son inaccesibles para anónimos).
 - **Todo permitido** para `authenticated` (el panel admin) en las 6
   tablas — no hay un rol "admin" separado, cualquier usuario logueado
   vía Supabase Auth tiene acceso total. Como no hay self-signup, la

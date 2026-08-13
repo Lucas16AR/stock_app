@@ -35,14 +35,42 @@ Políticas leídas directamente de `pg_policies` en la base en vivo
 - **`ventas` y `lotes`**: no tienen ninguna política de lectura pública.
   Los datos de ventas y costos de compra son inaccesibles para anónimos. ✅
 
-**Desviación encontrada** (pendiente, ver abajo): `fotos_producto`,
-`producto_categoria` y `categorias` tienen lectura pública **incondicional**
+**Desviación encontrada y CORREGIDA** (2026-08-13): `fotos_producto` y
+`producto_categoria` tenían lectura pública **incondicional**
 (`USING (true)`), no restringida a los productos visibles. Como el bucket
-de Storage es de lectura pública, un anónimo que consulte
-`fotos_producto` obtiene los `path` de las fotos de **todos** los
-productos — incluidos los ocultos o sin stock — y puede descargarlas.
-No expone ventas, costos ni credenciales, pero contradice la intención
+de Storage es de lectura pública, un anónimo que consultara
+`fotos_producto` obtenía los `path` de las fotos de **todos** los
+productos — incluidos los ocultos y los sin stock — y podía descargarlas.
+No exponía ventas, costos ni credenciales, pero contradecía la intención
 del diseño (que un producto oculto sea realmente invisible).
+
+Se reemplazaron ambas políticas por una que exige que el producto padre
+sea visible (migración
+`restrict_public_read_fotos_and_producto_categoria`):
+
+```sql
+create policy public_read_fotos on public.fotos_producto
+  for select using (
+    exists (
+      select 1 from public.productos p
+      where p.id = fotos_producto.producto_id
+        and p.visible_publico = true
+        and p.cantidad > 0
+    )
+  );
+```
+
+Verificado con datos de prueba dentro de una transacción con `rollback`
+(tres productos: visible, oculto y sin stock, cada uno con una foto).
+Consultando como rol `anon`, solo aparece la foto del producto visible. ✅
+
+`categorias` **se dejó con lectura pública a propósito**: el showroom la
+consulta suelta (`src/app/page.tsx`) para armar el filtro de categorías, y
+restringirla haría desaparecer categorías del filtro. Los nombres de
+categoría no son información sensible.
+
+El panel admin no se ve afectado: las políticas `admin_all_*` cubren `ALL`
+para `authenticated`.
 
 ### 2. Server Actions llamadas directamente (sin pasar por la UI)
 En Next.js, las Server Actions son técnicamente endpoints POST que se
@@ -89,38 +117,24 @@ deshabilitando cámara/micrófono/ubicación (no se usan).
   crítico: la capa de autorización real es RLS, no la contraseña por sí
   sola. [Documentación](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)
 
-## Resumen de cambios aplicados en este repo
+## Resumen de cambios aplicados
+En el repo:
 - `src/app/admin/(panel)/actions.ts`: validación server-side de tipo y
   tamaño de archivo en la subida de fotos.
 - `next.config.ts`: headers de seguridad HTTP.
 
+En la base (Supabase):
+- Migración `restrict_public_read_fotos_and_producto_categoria`: la
+  lectura pública de `fotos_producto` y `producto_categoria` ahora exige
+  que el producto padre sea visible y tenga stock.
+
 ## Pendiente para vos
-1. **Cerrar la lectura pública de `fotos_producto`** (ver "Desviación
-   encontrada" arriba). Las fotos de productos ocultos o sin stock hoy son
-   descargables por cualquiera que consulte la tabla. SQL propuesto:
-
-   ```sql
-   drop policy if exists public_read_fotos on public.fotos_producto;
-   create policy public_read_fotos on public.fotos_producto
-     for select using (
-       exists (
-         select 1 from public.productos p
-         where p.id = fotos_producto.producto_id
-           and p.visible_publico = true
-           and p.cantidad > 0
-       )
-     );
-   ```
-
-   El panel admin no se ve afectado (la política `admin_all_fotos` cubre
-   `ALL` para `authenticated`). Lo mismo aplica a `producto_categoria` si
-   querés que las categorías de un producto oculto tampoco se filtren.
-2. Elegir una contraseña de admin robusta si no lo era ya (la que
+1. Elegir una contraseña de admin robusta si no lo era ya (la que
    pusiste al principio es corta — considerá cambiarla desde el dashboard
    de Supabase → Authentication → Users, editando el usuario). Tené en
    cuenta que el chequeo contra HaveIBeenPwned no está disponible en el
    plan free.
-3. Si en algún momento agregás más admins o das acceso a alguien más,
+2. Si en algún momento agregás más admins o das acceso a alguien más,
    recordá que cualquier usuario autenticado tiene acceso total (no hay
    roles/permisos diferenciados todavía) — avisame si en el futuro
    necesitás roles separados (ej. un vendedor que solo carga ventas).
