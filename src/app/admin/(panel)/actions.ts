@@ -58,6 +58,17 @@ export async function eliminarLote(id: number) {
 }
 
 // ---------- Productos ----------
+
+// Extensión derivada del MIME type real, nunca del nombre de archivo que
+// manda el cliente (evita subir .html/.svg/.exe disfrazados de imagen).
+const MIME_A_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+const TAMANO_MAX_BYTES = 5 * 1024 * 1024; // 5 MB por foto
+
 async function subirFotos(
   supabase: Awaited<ReturnType<typeof createClient>>,
   productoId: number,
@@ -74,7 +85,10 @@ async function subirFotos(
     if (!file || file.size === 0) continue;
     if (existentes >= 4) break;
 
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const ext = MIME_A_EXT[file.type];
+    if (!ext) continue; // tipo de archivo no permitido, se ignora en silencio
+    if (file.size > TAMANO_MAX_BYTES) continue; // demasiado grande, se ignora
+
     const path = `${productoId}/${crypto.randomUUID()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
