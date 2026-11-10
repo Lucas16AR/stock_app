@@ -102,10 +102,27 @@ Entregado como un segundo `.md` de instrucciones (`THEME_DARK_MODE_INDY_CAPS.md`
 va después del patch de marca, pisa los mismos archivos + agrega
 `ThemeToggle.tsx`).
 
+## Acceso directo al panel admin (2026-11-10) — HECHO, falta pushear
+El usuario pidió un botón/ícono en el showroom para entrar al panel
+admin sin tipear `/admin` a mano. Se agregó un ícono de candado al lado
+del `ThemeToggle` en `src/components/SiteHeader.tsx`, como `next/link`
+a `/admin`. No cambia nada de seguridad: la ruta sigue protegida por el
+login y el middleware existentes (`src/proxy.ts`).
+
+El cambio se aplicó y se comiteó directamente desde una sesión de
+Cowork conectada a esta carpeta vía el puente de dispositivo (commit
+`2f740a8`, "Agregar acceso directo al panel admin desde el showroom").
+Verificado con `tsc --noEmit` y `eslint`, sin errores.
+
+**Falta el `git push`**: la sesión de Cowork no tiene credenciales de
+GitHub en la VM del puente de dispositivo, así que el commit quedó
+local. **Claude Code: si leés esto, hacé `git push origin master`** (o
+avisale al usuario si hace falta algo más, como resolver un conflicto).
+
 ## Pendiente
-- Nada abierto de este lado. El usuario aplica los dos patches
-  localmente (marca, luego modo oscuro), hace commit/push y Vercel
-  redeploya solo.
+- Pushear el commit `2f740a8` (ver sección de arriba).
+- Fuera de eso, nada abierto de este lado. El usuario aplica los
+  patches localmente, hace commit/push y Vercel redeploya solo.
 
 ## Código
 El usuario tiene el código en su repo de GitHub y lo despliega en
