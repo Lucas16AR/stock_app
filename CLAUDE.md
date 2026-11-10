@@ -76,3 +76,10 @@ En producción en Vercel: **https://stock-app-six-woad.vercel.app**
 El proyecto se importó manualmente desde el dashboard de Vercel (el
 conector automático no tenía permisos para crear proyectos). Cada push a
 `master` redeploya solo.
+
+Supabase está en el plan gratis, que pausa el proyecto tras ~7 días sin
+actividad (el showroom queda vacío sin error y el login no anda). Para
+evitarlo, `vercel.json` define un cron diario que llama a
+`/api/keepalive` (`src/app/api/keepalive/route.ts`), que hace una consulta
+liviana a la base. Si se define `CRON_SECRET` en Vercel, el endpoint solo
+acepta la llamada del cron.
