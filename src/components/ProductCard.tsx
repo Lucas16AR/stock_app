@@ -1,12 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Producto } from "@/lib/types";
-import { formatARS, fotoUrl, precioSugerido } from "@/lib/pricing";
+import { formatARS, fotoUrl } from "@/lib/pricing";
 import { SUPABASE_URL } from "@/lib/config";
 
 export default function ProductCard({ producto }: { producto: Producto }) {
   const foto = producto.fotos_producto?.[0];
-  const precio = precioSugerido(producto);
+  const precio = producto.precio_venta;
 
   return (
     <Link

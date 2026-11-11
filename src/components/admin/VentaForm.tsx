@@ -2,7 +2,6 @@
 
 import { useActionState } from "react";
 import { Producto } from "@/lib/types";
-import { precioSugerido } from "@/lib/pricing";
 import { registrarVenta } from "@/app/admin/(panel)/actions";
 
 type State = { error: string | null } | undefined;
@@ -38,7 +37,7 @@ export default function VentaForm({ productos }: { productos: Producto[] }) {
         >
           <option value="">Seleccioná un producto</option>
           {productos.map((p) => (
-            <option key={p.id} value={p.id} data-precio={precioSugerido(p)}>
+            <option key={p.id} value={p.id} data-precio={p.precio_venta}>
               {p.nombre} (stock: {p.cantidad})
             </option>
           ))}

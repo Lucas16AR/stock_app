@@ -2,6 +2,7 @@ import { Categoria, Lote, Producto } from "@/lib/types";
 import { fotoUrl } from "@/lib/pricing";
 import { SUPABASE_URL } from "@/lib/config";
 import { eliminarFoto } from "@/app/admin/(panel)/actions";
+import PrecioCalculado from "./PrecioCalculado";
 
 export default function ProductForm({
   producto,
@@ -38,7 +39,7 @@ export default function ProductForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="mb-1 block text-xs text-muted">Stock *</label>
           <input
@@ -47,53 +48,6 @@ export default function ProductForm({
             min={0}
             required
             defaultValue={producto?.cantidad ?? 0}
-            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs text-muted">Precio compra</label>
-          <input
-            type="number"
-            step="0.01"
-            name="precio_compra"
-            defaultValue={producto?.precio_compra ?? 0}
-            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs text-muted">Envío unitario</label>
-          <input
-            type="number"
-            step="0.01"
-            name="costo_envio_unitario"
-            defaultValue={producto?.costo_envio_unitario ?? 0}
-            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs text-muted">Costo extra</label>
-          <input
-            type="number"
-            step="0.01"
-            name="costo_extra"
-            defaultValue={producto?.costo_extra ?? 0}
-            className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="mb-1 block text-xs text-muted">
-            Margen (0.5 = 50%)
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            min={0}
-            max={5}
-            name="margen"
-            defaultValue={producto?.margen ?? 0.5}
             className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
           />
         </div>
@@ -113,6 +67,14 @@ export default function ProductForm({
           </select>
         </div>
       </div>
+
+      <PrecioCalculado
+        precioCompraInicial={producto?.precio_compra ?? 0}
+        envioInicial={producto?.costo_envio_unitario ?? 0}
+        extraInicial={producto?.costo_extra ?? 0}
+        margenInicial={producto?.margen ?? 0.5}
+        precioVentaInicial={producto?.precio_venta ?? null}
+      />
 
       <div>
         <label className="mb-1 block text-xs text-muted">Categorías</label>

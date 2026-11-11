@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Producto } from "@/lib/types";
-import { formatARS, fotoUrl, precioSugerido } from "@/lib/pricing";
+import { formatARS, fotoUrl } from "@/lib/pricing";
 import { SUPABASE_URL } from "@/lib/config";
 import SiteHeader from "@/components/SiteHeader";
 import WhatsappButton from "@/components/WhatsappButton";
@@ -25,7 +25,7 @@ export default async function ProductoPage(props: PageProps<"/producto/[id]">) {
   if (!producto) notFound();
 
   const fotos = producto.fotos_producto ?? [];
-  const precio = precioSugerido(producto);
+  const precio = producto.precio_venta;
 
   return (
     <>

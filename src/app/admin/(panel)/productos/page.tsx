@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Producto } from "@/lib/types";
-import { formatARS, precioSugerido } from "@/lib/pricing";
+import { formatARS } from "@/lib/pricing";
 import { eliminarProducto } from "../actions";
 
 export const revalidate = 0;
@@ -33,7 +33,7 @@ export default async function ProductosPage() {
             <tr>
               <th className="px-4 py-2">Nombre</th>
               <th className="px-4 py-2">Stock</th>
-              <th className="px-4 py-2">Precio sugerido</th>
+              <th className="px-4 py-2">Precio de venta</th>
               <th className="px-4 py-2">Visible</th>
               <th className="px-4 py-2">Categorías</th>
               <th className="px-4 py-2"></th>
@@ -44,7 +44,7 @@ export default async function ProductosPage() {
               <tr key={p.id} className="border-t border-border bg-card">
                 <td className="px-4 py-2 text-foreground">{p.nombre}</td>
                 <td className="px-4 py-2">{p.cantidad}</td>
-                <td className="px-4 py-2 text-accent">{formatARS(precioSugerido(p))}</td>
+                <td className="px-4 py-2 text-accent">{formatARS(p.precio_venta)}</td>
                 <td className="px-4 py-2">{p.visible_publico ? "Sí" : "No"}</td>
                 <td className="px-4 py-2 text-muted">
                   {p.categorias?.map((c) => c.nombre).join(", ") || "-"}

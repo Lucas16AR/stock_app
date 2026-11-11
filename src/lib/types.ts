@@ -26,6 +26,7 @@ export type Producto = {
   costo_envio_unitario: number;
   costo_extra: number;
   margen: number;
+  precio_venta: number;
   lote_id: number | null;
   visible_publico: boolean;
   fecha_creacion: string;

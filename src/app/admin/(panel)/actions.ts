@@ -115,6 +115,7 @@ export async function crearProducto(formData: FormData) {
   const costo_envio_unitario = Number(formData.get("costo_envio_unitario") || 0);
   const costo_extra = Number(formData.get("costo_extra") || 0);
   const margen = Number(formData.get("margen") || 0.5);
+  const precio_venta = Number(formData.get("precio_venta") || 0);
   const lote_id_raw = formData.get("lote_id");
   const lote_id = lote_id_raw ? Number(lote_id_raw) : null;
   const visible_publico = formData.get("visible_publico") === "on";
@@ -132,6 +133,7 @@ export async function crearProducto(formData: FormData) {
       costo_envio_unitario,
       costo_extra,
       margen,
+      precio_venta,
       lote_id,
       visible_publico,
     })
@@ -164,6 +166,7 @@ export async function actualizarProducto(id: number, formData: FormData) {
   const costo_envio_unitario = Number(formData.get("costo_envio_unitario") || 0);
   const costo_extra = Number(formData.get("costo_extra") || 0);
   const margen = Number(formData.get("margen") || 0.5);
+  const precio_venta = Number(formData.get("precio_venta") || 0);
   const lote_id_raw = formData.get("lote_id");
   const lote_id = lote_id_raw ? Number(lote_id_raw) : null;
   const visible_publico = formData.get("visible_publico") === "on";
@@ -179,6 +182,7 @@ export async function actualizarProducto(id: number, formData: FormData) {
       costo_envio_unitario,
       costo_extra,
       margen,
+      precio_venta,
       lote_id,
       visible_publico,
     })

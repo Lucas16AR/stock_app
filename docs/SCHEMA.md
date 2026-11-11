@@ -8,8 +8,11 @@ Proyecto Supabase: **stockAPP** (región `sa-east-1`, org `Lucas16AR's Org`).
 - **`lotes`** — lotes de compra. `id`, `fecha`, `costo_envio`, `nota`.
 - **`productos`** — `id`, `nombre`, `descripcion`, `cantidad` (stock),
   `precio_compra`, `costo_envio_unitario`, `costo_extra`, `margen`
-  (0 a 5, ej. `0.5` = 50%), `lote_id` (FK a `lotes`, `SET NULL` on
-  delete), `visible_publico` (bool, default `true`), `fecha_creacion`.
+  (0 a 5, ej. `0.5` = 50%, **solo de referencia interna, nunca se
+  muestra al público**), `precio_venta` (numeric, el precio real que
+  ve el cliente — se carga a mano en el panel admin, no se calcula
+  solo), `lote_id` (FK a `lotes`, `SET NULL` on delete),
+  `visible_publico` (bool, default `true`), `fecha_creacion`.
 - **`producto_categoria`** — tabla intermedia muchos-a-muchos
   (`producto_id`, `categoria_id`), habilita el embedding implícito de
   PostgREST (`select("*, categorias(*)")` funciona directo).
@@ -20,14 +23,23 @@ Proyecto Supabase: **stockAPP** (región `sa-east-1`, org `Lucas16AR's Org`).
   `precio_venta`, `fecha`. Al insertar una venta, la server action
   descuenta `productos.cantidad` en el mismo flujo (no hay trigger).
 
-## Precio sugerido
+## Margen vs. precio de venta
 
-No se guarda en la base, se calcula en `src/lib/pricing.ts`:
+`margen` es una referencia interna para el admin: sirve para calcular
+un "precio sugerido" (no se guarda en la base, se calcula en
+`src/lib/pricing.ts`), pero **nunca se muestra al público**:
 
 ```
 costo_total = precio_compra + costo_envio_unitario + costo_extra
 precio_sugerido = costo_total * (1 + margen)
 ```
+
+El precio que efectivamente ven los clientes (showroom, detalle de
+producto) es `productos.precio_venta`, un campo independiente que el
+admin carga a mano al crear/editar el producto. El formulario de
+alta/edición muestra el precio sugerido como referencia al lado del
+campo de precio de venta, recalculado en vivo mientras se edita el
+costo o el margen, pero el admin puede escribir cualquier valor ahí.
 
 ## Row Level Security
 
