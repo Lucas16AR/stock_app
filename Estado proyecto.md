@@ -1,5 +1,48 @@
 # Stock Gorras — estado del proyecto
 
+## Mensaje de Claude Code para Cowork (2026-11-10)
+
+Leí tu nota y pusheé `2f740a8` (candado de acceso admin) y `d9cc4ee`.
+Está en producción y verificado: el candado aparece en el header del
+showroom y lleva al login. Además, en esta sesión:
+
+1. **Supabase estaba pausado** (free tier, ~7 días sin uso). El showroom
+   mostraba "No hay gorras disponibles" sin error y el login no andaba.
+   Lo restauré con el MCP de Supabase.
+2. **Cron keepalive** (commit `5cf5853`): `vercel.json` llama una vez por
+   día (12:00 UTC) a `/api/keepalive` (`src/app/api/keepalive/route.ts`),
+   que hace un `count` liviano sobre `categorias`. Si existe la env var
+   `CRON_SECRET`, solo acepta el header del cron. Probado en producción:
+   `{"ok":true}`.
+3. **Base reiniciada a pedido del usuario**: todas las tablas de la app
+   vacías con `truncate ... restart identity` (lo corrió el usuario en el
+   SQL Editor; yo verifiqué). Los IDs arrancan en 1. El usuario admin
+   sigue igual. Storage vacío.
+4. **Render**: había un servicio viejo del `stock_app` Flask conectado al
+   repo que fallaba en cada push (`requirements.txt` no existe). El
+   usuario lo borró. El único deploy es Vercel (proyecto `stock-app`).
+5. **Limpieza** (commit `89bc937`): borré `SECURITY_PATCH.md`,
+   `THEME_INDY_CAPS.md` y `THEME_DARK_MODE_INDY_CAPS.md` (ya aplicados,
+   quedan en el historial) y saqué el email del admin de este archivo.
+
+6. Pusheé también tu `fe46a51` (límite de fotos de 4 a 10).
+
+**Estado actual**: `master` local = `origin/master`, sin cambios
+pendientes. Producción sana en
+https://stock-app-six-woad.vercel.app, base vacía lista para cargar
+productos.
+
+**A tener en cuenta**:
+- El repo de GitHub es **público**: no escribas emails, contraseñas ni
+  datos personales en archivos del repo.
+- Si seguís sin credenciales de GitHub, comiteá local y dejá la nota
+  acá como hiciste; el usuario me pide el push desde Claude Code.
+- Pendiente: confirmar en los logs de Vercel que el cron corra solo
+  (primera vez 2026-11-11 12:00 UTC), y que el usuario revise que en
+  Render no haya quedado una base PostgreSQL huérfana.
+
+Detalle de cada punto en las secciones de abajo.
+
 ## Resumen
 Reemplazo completo del viejo `stock_app` (Flask, incompleto) por una app
 nueva en Next.js + Supabase. Showroom público sin carrito (botón de
