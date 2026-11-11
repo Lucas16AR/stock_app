@@ -13,8 +13,8 @@ selector de modo claro/oscuro.
   compra online). Botón de WhatsApp con mensaje prellenado por producto.
 - Sin migración de datos del proyecto viejo (arranca limpio).
 - WhatsApp de contacto: 5492604647804.
-- Login admin: usuario/contraseña vía Supabase Auth (`luqui0008@gmail.com`,
-  contraseña no guardada acá por privacidad — la definió el usuario). No
+- Login admin: usuario/contraseña vía Supabase Auth (un único usuario;
+  email y contraseña no se guardan acá porque el repo es público). No
   planea agregar otros usuarios admin salvo que el negocio crezca mucho.
 - El usuario subió el código a su repo de GitHub existente
   (`Lucas16AR/stock_app`) y va a seguir trabajando con Claude Code desde
@@ -78,8 +78,9 @@ rediseñó todo el sitio (showroom público + panel admin) para combinar:
 - Login admin: logo completo.
 - Favicon/ícono de pestaña actualizado al isotipo de INDY CAPS.
 
-Entregado como un único `.md` de instrucciones (no zip, por pedido
-explícito) más los 5 archivos binarios (logos + íconos).
+Entregado como un `.md` de instrucciones más los 5 archivos binarios
+(logos + íconos). Ya aplicado (commit `2c94b99`); el `.md` se borró del
+repo.
 
 ## Modo claro/oscuro (2026-08-13) — HECHO
 El usuario pidió que además del tema claro exista un modo oscuro con
@@ -98,11 +99,12 @@ selector, no uno fijo. Se implementó:
   evitar parpadeo de tema equivocado al cargar.
 - `tsc --noEmit` y `eslint` quedaron sin errores ni warnings.
 
-Entregado como un segundo `.md` de instrucciones (`THEME_DARK_MODE_INDY_CAPS.md`,
-va después del patch de marca, pisa los mismos archivos + agrega
-`ThemeToggle.tsx`).
+Entregado como un segundo `.md` de instrucciones. Ya aplicado (commit
+`2c94b99`); el `.md` se borró del repo, igual que el del patch de
+seguridad (los cambios quedan en el historial de git y lo vigente está
+en `docs/SECURITY.md` y `CLAUDE.md`).
 
-## Acceso directo al panel admin (2026-11-10) — HECHO, falta pushear
+## Acceso directo al panel admin (2026-11-10) — HECHO
 El usuario pidió un botón/ícono en el showroom para entrar al panel
 admin sin tipear `/admin` a mano. Se agregó un ícono de candado al lado
 del `ThemeToggle` en `src/components/SiteHeader.tsx`, como `next/link`
@@ -112,17 +114,34 @@ login y el middleware existentes (`src/proxy.ts`).
 El cambio se aplicó y se comiteó directamente desde una sesión de
 Cowork conectada a esta carpeta vía el puente de dispositivo (commit
 `2f740a8`, "Agregar acceso directo al panel admin desde el showroom").
-Verificado con `tsc --noEmit` y `eslint`, sin errores.
+Verificado con `tsc --noEmit` y `eslint`, sin errores. La sesión de
+Cowork no tenía credenciales de GitHub, así que el push lo hizo Claude
+Code local; verificado en producción (el candado aparece en el header).
 
-**Falta el `git push`**: la sesión de Cowork no tiene credenciales de
-GitHub en la VM del puente de dispositivo, así que el commit quedó
-local. **Claude Code: si leés esto, hacé `git push origin master`** (o
-avisale al usuario si hace falta algo más, como resolver un conflicto).
+## Supabase pausado y cron keepalive (2026-11-10) — HECHO
+El proyecto Supabase estaba pausado por inactividad (plan gratis, ~7
+días sin uso): el showroom mostraba "No hay gorras disponibles" sin
+error y el login no andaba. Se restauró desde el MCP de Supabase. Para
+que no vuelva a pasar se agregó un cron diario de Vercel (`vercel.json`,
+12:00 UTC) que llama a `/api/keepalive`, una consulta liviana a la base.
+Verificado en producción (`{"ok":true}`).
+
+## Base reiniciada (2026-11-10)
+A pedido del usuario se vaciaron todas las tablas de la app (quedaba un
+lote de prueba) con `truncate ... restart identity`, así los IDs vuelven
+a arrancar en 1. El usuario admin se mantuvo.
+
+## Render (2026-11-10) — RESUELTO
+Seguía conectado al repo un servicio de Render del viejo `stock_app`
+Flask; con cada push intentaba `pip install -r requirements.txt` y
+mandaba un mail de "build failed". El usuario lo borró desde Render. El
+único deploy del repo es Vercel.
 
 ## Pendiente
-- Pushear el commit `2f740a8` (ver sección de arriba).
-- Fuera de eso, nada abierto de este lado. El usuario aplica los
-  patches localmente, hace commit/push y Vercel redeploya solo.
+- Confirmar en los logs de Vercel que el cron keepalive corra solo
+  (primera ejecución: 2026-11-11 12:00 UTC).
+- Usuario: revisar que en Render no haya quedado una base PostgreSQL
+  huérfana del proyecto viejo.
 
 ## Código
 El usuario tiene el código en su repo de GitHub y lo despliega en
