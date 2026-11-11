@@ -68,6 +68,7 @@ const MIME_A_EXT: Record<string, string> = {
   "image/gif": "gif",
 };
 const TAMANO_MAX_BYTES = 5 * 1024 * 1024; // 5 MB por foto
+const MAX_FOTOS_POR_PRODUCTO = 10;
 
 async function subirFotos(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -83,7 +84,7 @@ async function subirFotos(
 
   for (const file of files) {
     if (!file || file.size === 0) continue;
-    if (existentes >= 4) break;
+    if (existentes >= MAX_FOTOS_POR_PRODUCTO) break;
 
     const ext = MIME_A_EXT[file.type];
     if (!ext) continue; // tipo de archivo no permitido, se ignora en silencio

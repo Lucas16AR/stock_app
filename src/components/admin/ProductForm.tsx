@@ -174,7 +174,7 @@ export default function ProductForm({
 
       <div>
         <label className="mb-1 block text-xs text-muted">
-          Agregar fotos (máx. 4 en total)
+          Agregar fotos (máx. 10 en total)
         </label>
         <input
           type="file"
