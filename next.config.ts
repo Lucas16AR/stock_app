@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Default 1 MB: no alcanzaba para subir fotos. Vercel corta a 4,5 MB
+      // por request, así que no tiene sentido subirlo más. Las fotos se
+      // achican en el navegador (FotosInput) para entrar en este tope.
+      bodySizeLimit: "4mb",
+    },
+  },
   images: {
     remotePatterns: [
       {

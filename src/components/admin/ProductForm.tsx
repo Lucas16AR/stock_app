@@ -3,6 +3,8 @@ import { fotoUrl } from "@/lib/pricing";
 import { SUPABASE_URL } from "@/lib/config";
 import { eliminarFoto } from "@/app/admin/(panel)/actions";
 import PrecioCalculado from "./PrecioCalculado";
+import FotosInput from "./FotosInput";
+import { MAX_FOTOS_POR_PRODUCTO } from "@/lib/fotos";
 
 export default function ProductForm({
   producto,
@@ -117,17 +119,19 @@ export default function ProductForm({
                   alt=""
                   className="h-24 w-24 rounded-lg object-cover ring-1 ring-border"
                 />
-                <form
-                  action={async () => {
-                    "use server";
-                    await eliminarFoto(f.id, producto.id);
-                  }}
-                  className="absolute -right-2 -top-2"
+                {/* No puede ser un <form> propio: quedaría anidado dentro del
+                    form del producto (HTML no lo permite y el ✕ terminaba
+                    guardando el producto). formAction hace que este botón
+                    envíe el form exterior a otra acción. */}
+                <button
+                  type="submit"
+                  formAction={eliminarFoto.bind(null, f.id, producto.id)}
+                  formNoValidate
+                  aria-label="Borrar foto"
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs text-white"
                 >
-                  <button className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs text-white">
-                    ✕
-                  </button>
-                </form>
+                  ✕
+                </button>
               </div>
             ))}
           </div>
@@ -136,14 +140,10 @@ export default function ProductForm({
 
       <div>
         <label className="mb-1 block text-xs text-muted">
-          Agregar fotos (máx. 10 en total)
+          Agregar fotos (máx. {MAX_FOTOS_POR_PRODUCTO} en total, se achican solas)
         </label>
-        <input
-          type="file"
-          name="fotos"
-          multiple
-          accept="image/*"
-          className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm text-muted"
+        <FotosInput
+          restantes={MAX_FOTOS_POR_PRODUCTO - (producto?.fotos_producto?.length ?? 0)}
         />
       </div>
 

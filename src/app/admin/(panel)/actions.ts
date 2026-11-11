@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { MAX_FOTOS_POR_PRODUCTO } from "@/lib/fotos";
 
 // ---------- Categorías ----------
 export async function crearCategoria(formData: FormData) {
@@ -68,7 +69,6 @@ const MIME_A_EXT: Record<string, string> = {
   "image/gif": "gif",
 };
 const TAMANO_MAX_BYTES = 5 * 1024 * 1024; // 5 MB por foto
-const MAX_FOTOS_POR_PRODUCTO = 10;
 
 async function subirFotos(
   supabase: Awaited<ReturnType<typeof createClient>>,
