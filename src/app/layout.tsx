@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Inter } from "next/font/google";
+import { SITE_NAME, SITE_TAGLINE, SITE_URL, UBICACION } from "@/lib/site";
 import "./globals.css";
 
 const display = Bebas_Neue({
@@ -13,9 +14,26 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const DESCRIPCION = `${SITE_TAGLINE} Catálogo de gorras vintage, selección y marcas en ${UBICACION}. Consultá por WhatsApp.`;
+
 export const metadata: Metadata = {
-  title: "Indy Caps",
-  description: "Catálogo de gorras disponibles — Indy Caps",
+  metadataBase: new URL(SITE_URL),
+  title: `${SITE_NAME} — Catálogo de gorras`,
+  description: DESCRIPCION,
+  openGraph: {
+    title: `${SITE_NAME} — Catálogo de gorras`,
+    description: DESCRIPCION,
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "es_AR",
+    images: [{ url: "/brand/logo.png", width: 912, height: 736, alt: SITE_NAME }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} — Catálogo de gorras`,
+    description: DESCRIPCION,
+    images: ["/brand/logo.png"],
+  },
 };
 
 // Corre antes de pintar la página para evitar el flash del tema

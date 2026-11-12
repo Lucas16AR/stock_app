@@ -11,6 +11,14 @@
   --muted: #6b6b6b;
   --hover: #f5f5f5;
   --accent: #d6301f;
+
+  /* Colores de marca que NO cambian con el tema: superficies siempre
+     oscuras (banner, badges sobre fotos), crema sobre esas superficies,
+     el fondo exacto del isotipo y el verde de WhatsApp. */
+  --ink: #171412;
+  --paper: #f5f2ec;
+  --mark-bg: #f9f6f1;
+  --whatsapp: #25d366;
 }
 
 .dark {
@@ -33,6 +41,10 @@
   --color-muted: var(--muted);
   --color-hover: var(--hover);
   --color-accent: var(--accent);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-mark-bg: var(--mark-bg);
+  --color-whatsapp: var(--whatsapp);
   --font-sans: var(--font-inter);
   --font-display: var(--font-display);
 }

@@ -29,9 +29,10 @@ Políticas leídas directamente de `pg_policies` en la base en vivo
   `auth.role() = 'authenticated'`, es decir, con sesión de Supabase Auth
   válida. Un visitante anónimo no puede crear, editar ni borrar nada aunque
   llame a los endpoints directamente. ✅
-- **`productos`**, lectura pública: `visible_publico = true AND cantidad >
-  0`. Los productos ocultos o sin stock **no son alcanzables ni adivinando
-  el ID** — la restricción es a nivel de base, no de código de la app. ✅
+- **`productos`**, lectura pública: `visible_publico = true` (hasta
+  2026-11-12 también exigía `cantidad > 0`; ver "Mostrar vendidas" abajo).
+  Los productos ocultos **no son alcanzables ni adivinando el ID** — la
+  restricción es a nivel de base, no de código de la app. ✅
 - **`ventas` y `lotes`**: no tienen ninguna política de lectura pública.
   Los datos de ventas y costos de compra son inaccesibles para anónimos. ✅
 
@@ -116,6 +117,17 @@ deshabilitando cámara/micrófono/ubicación (no se usan).
   principio: requiere plan Pro** y el proyecto está en el free tier. No es
   crítico: la capa de autorización real es RLS, no la contraseña por sí
   sola. [Documentación](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)
+
+## Mostrar vendidas (2026-11-12)
+
+Decisión del usuario: las gorras vendidas siguen visibles en el showroom,
+al final del catálogo y con el cartel "Vendida", en vez de desaparecer.
+Para eso las tres políticas de lectura pública (`productos`,
+`fotos_producto`, `producto_categoria`) dejaron de exigir `cantidad > 0`
+y solo exigen `visible_publico = true` (migración
+`public_read_incluye_vendidas`). Un producto oculto sigue siendo
+invisible para anónimos. Para sacar una vendida del showroom, se destilda
+"Visible al público" en el admin.
 
 ## Resumen de cambios aplicados
 En el repo:

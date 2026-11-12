@@ -46,7 +46,9 @@ costo o el margen, pero el admin puede escribir cualquier valor ahí.
 Todas las tablas tienen RLS habilitado:
 
 - **Lectura pública** (rol `anon`):
-  - `productos`: solo donde `visible_publico = true AND cantidad > 0`.
+  - `productos`: solo donde `visible_publico = true` (desde 2026-11-12 se
+    incluyen las vendidas, `cantidad = 0`, para mostrarlas con el cartel
+    "Vendida"; para sacar una del showroom se destilda `visible_publico`).
   - `fotos_producto` y `producto_categoria`: solo las filas cuyo producto
     padre cumple esa misma condición (la política hace un `exists` contra
     `productos`). Antes eran `USING (true)`, lo que filtraba las fotos de

@@ -12,7 +12,7 @@ export default function SiteHeader() {
             alt="Indy Caps"
             width={48}
             height={29}
-            className="h-9 w-auto"
+            className="h-9 w-auto rounded-md"
             priority
           />
           <span className="font-display text-2xl tracking-wide text-foreground">

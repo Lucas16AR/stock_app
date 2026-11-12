@@ -15,8 +15,9 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
 - Next.js 16 (App Router, TypeScript), Tailwind v4, Supabase (Postgres +
   Auth + Storage).
 - `src/app/page.tsx` y `src/app/producto/[id]/page.tsx`: showroom público.
-  Solo muestran productos con `visible_publico = true` y `cantidad > 0`
-  (impuesto también por RLS, no solo por el query).
+  Solo muestran productos con `visible_publico = true` (impuesto también
+  por RLS, no solo por el query); los de `cantidad = 0` se muestran al
+  final del catálogo con el cartel "Vendida".
 - `src/app/admin/login/`: login (fuera del route group protegido).
 - `src/app/admin/(panel)/`: todo lo protegido (dashboard, productos, lotes,
   ventas, categorías, inventario) comparte `layout.tsx` con la nav. Las
@@ -57,7 +58,10 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
 - El sitio tiene **modo claro y oscuro**. Los colores viven como tokens en
   `src/app/globals.css` (`--background`, `--foreground`, `--card`,
   `--border`, `--input-border`, `--muted`, `--hover`, `--accent`), con los
-  valores del modo oscuro bajo `.dark`. El variant se declara con
+  valores del modo oscuro bajo `.dark`. Además hay tokens de marca que
+  **no** cambian con el tema: `ink` (superficie siempre oscura: banner,
+  badges sobre fotos), `paper` (crema sobre `ink`), `mark-bg` (fondo
+  exacto de `mark.png`) y `whatsapp` (verde de los botones). El variant se declara con
   `@custom-variant dark (&:where(.dark, .dark *))`.
 - **No uses colores fijos en los componentes** (ni `bg-neutral-900` ni
   `bg-[#f5f2ec]`): usá las clases de token (`bg-background`,
