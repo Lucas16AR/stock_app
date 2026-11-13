@@ -2,7 +2,7 @@
 
 Archivo de traspaso entre sesiones (Claude Code local y Cowork). Arriba
 está el estado actual y lo pendiente; abajo, el historial por versión con
-el detalle de cada cambio. **Actualizado: 2026-11-13.**
+el detalle de cada cambio. **Actualizado: 2026-11-14.**
 
 > El repo de GitHub es **público**: no escribas acá emails, contraseñas
 > ni datos personales.
@@ -30,19 +30,36 @@ el detalle de cada cambio. **Actualizado: 2026-11-13.**
    desaparecer solo esa foto). No se pudo probar sin el login.
 2. **Usuario — Render**: confirmar que no quedó una base PostgreSQL
    huérfana del proyecto Flask viejo (el web service ya se borró).
-3. **Decidir — "Ref. interna" en las descripciones**: el showroom la
-   oculta en pantalla (`descripcionPublica` en `src/lib/site.ts`), pero la
-   columna `descripcion` es pública por RLS, así que se puede leer por la
-   API con la anon key. Si esas referencias no deben ser públicas, moverlas
-   a una columna aparte sin lectura para `anon`.
+3. **Tarea 001 (prioridad 1, seguridad)** — ajustar qué datos de
+   `productos` puede leer un visitante. Detalle en `tareas/001-...md`
+   (carpeta privada, no se sube al repo).
 
 ## Cómo trabajar en este repo (para las dos sesiones)
 
+**Roles (acordados el 2026-11-13):**
+- **Capi** — dueño del producto y líder del equipo. Decide qué se hace,
+  prioridades, todo lo de negocio, y aprueba lo irreversible (cambios de
+  base en producción, borrar datos, gastos).
+- **Cowork (Claude en claude.ai)** — project manager / jefe de
+  desarrollo. Baja lo que pide Capi a tareas con criterio de aceptación,
+  sugiere mejoras, revisa lo que hace Claude Code (diff, build y
+  producción) y mantiene este archivo al día.
+- **Claude Code (local)** — desarrollador. Implementa las tareas, corre
+  las verificaciones antes de commitear y pushea cuando Capi lo pide.
+
+**Flujo de tareas:** cada tarea es un archivo en `tareas/NNN-nombre.md`
+(carpeta en `.gitignore`: el repo es público y ahí se describen problemas
+antes de arreglarlos). Cowork la escribe → Capi la aprueba → Claude Code
+la hace en la rama `tarea/NNN-nombre` y completa el informe → Cowork la
+revisa → con el OK de Capi se mergea a `master`. El flujo completo está
+en `tareas/README.md`. Este archivo sigue siendo el estado general y el
+historial.
+
 - Cowork no tiene credenciales de GitHub: **comiteá local y dejá la nota
   acá**; el usuario le pide el push a Claude Code, que revisa y pushea.
-- Los cambios de base (migraciones, políticas RLS) **no quedan en el
-  repo** (no hay carpeta de migraciones). Cuando hagas uno, escribí acá el
-  SQL exacto o su efecto, y si quedó aplicado o no. En v2.4.0 la
+- Los cambios de base (migraciones, políticas RLS) van como archivo en
+  `supabase/migrations/` (la carpeta la crea la tarea 001; antes no
+  existía). Anotá acá si quedaron aplicados o no. En v2.4.0 la
   migración se pidió en el mensaje del commit pero no se aplicó; se
   detectó recién al verificar en producción.
 - Antes de pushear: `npx tsc --noEmit && npx eslint . && npx next build`.

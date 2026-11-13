@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# tareas del equipo (privadas, el repo es publico)
+/tareas/
