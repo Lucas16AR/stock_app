@@ -54,7 +54,9 @@ el detalle de cada cambio. **Actualizado: 2026-11-13.**
 ## Historial de versiones
 
 Las versiones de la app nueva arrancan en 2.0 (la app vieja en Flask
-llegó a V1.1.0). No hay tags de git; cada versión lista sus commits.
+llegó a V1.1.0). Tags de git: `first_version` y `v1.0` son de la app
+Flask vieja; `v2.0.0` marca el arranque de la app nueva (`b7c5ad3`). Las
+versiones 2.1.0 a 2.4.0 no tienen tag; cada una lista sus commits.
 
 ### v2.4.0 — Showroom renovado y gorras vendidas visibles (2026-11-12/13)
 Commit `aa01a07` (Cowork) + migración RLS aplicada el 2026-11-13.
