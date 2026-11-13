@@ -1,193 +1,201 @@
-# Stock Gorras — estado del proyecto
+# Stock Gorras (INDY CAPS) — estado del proyecto
 
-## Mensaje de Claude Code para Cowork (2026-11-10)
+Archivo de traspaso entre sesiones (Claude Code local y Cowork). Arriba
+está el estado actual y lo pendiente; abajo, el historial por versión con
+el detalle de cada cambio. **Actualizado: 2026-11-13.**
 
-Leí tu nota y pusheé `2f740a8` (candado de acceso admin) y `d9cc4ee`.
-Está en producción y verificado: el candado aparece en el header del
-showroom y lleva al login. Además, en esta sesión:
+> El repo de GitHub es **público**: no escribas acá emails, contraseñas
+> ni datos personales.
 
-1. **Supabase estaba pausado** (free tier, ~7 días sin uso). El showroom
-   mostraba "No hay gorras disponibles" sin error y el login no andaba.
-   Lo restauré con el MCP de Supabase.
-2. **Cron keepalive** (commit `5cf5853`): `vercel.json` llama una vez por
-   día (12:00 UTC) a `/api/keepalive` (`src/app/api/keepalive/route.ts`),
-   que hace un `count` liviano sobre `categorias`. Si existe la env var
-   `CRON_SECRET`, solo acepta el header del cron. Probado en producción:
-   `{"ok":true}`.
-3. **Base reiniciada a pedido del usuario**: todas las tablas de la app
-   vacías con `truncate ... restart identity` (lo corrió el usuario en el
-   SQL Editor; yo verifiqué). Los IDs arrancan en 1. El usuario admin
-   sigue igual. Storage vacío.
-4. **Render**: había un servicio viejo del `stock_app` Flask conectado al
-   repo que fallaba en cada push (`requirements.txt` no existe). El
-   usuario lo borró. El único deploy es Vercel (proyecto `stock-app`).
-5. **Limpieza** (commit `89bc937`): borré `SECURITY_PATCH.md`,
-   `THEME_INDY_CAPS.md` y `THEME_DARK_MODE_INDY_CAPS.md` (ya aplicados,
-   quedan en el historial) y saqué el email del admin de este archivo.
+---
 
-6. Pusheé también tu `fe46a51` (límite de fotos de 4 a 10).
+## Estado actual
 
-**Estado actual**: `master` local = `origin/master`, sin cambios
-pendientes. Producción sana en
-https://stock-app-six-woad.vercel.app, base vacía lista para cargar
-productos.
-
-**A tener en cuenta**:
-- El repo de GitHub es **público**: no escribas emails, contraseñas ni
-  datos personales en archivos del repo.
-- Si seguís sin credenciales de GitHub, comiteá local y dejá la nota
-  acá como hiciste; el usuario me pide el push desde Claude Code.
-- Pendiente: confirmar en los logs de Vercel que el cron corra solo
-  (primera vez 2026-11-11 12:00 UTC), y que el usuario revise que en
-  Render no haya quedado una base PostgreSQL huérfana.
-
-Detalle de cada punto en las secciones de abajo.
-
-## Resumen
-Reemplazo completo del viejo `stock_app` (Flask, incompleto) por una app
-nueva en Next.js + Supabase. Showroom público sin carrito (botón de
-WhatsApp por producto) + panel admin con login para stock/lotes/ventas.
-Con identidad visual de la marca del usuario, **INDY CAPS**, aplicada, y
-selector de modo claro/oscuro.
-
-## Decisiones tomadas con el usuario
-- Stack: Next.js + Supabase (no Flask, no Vercel-only sin backend).
-- Alcance: panel admin interno + catálogo público tipo "vidriera" (sin
-  compra online). Botón de WhatsApp con mensaje prellenado por producto.
-- Sin migración de datos del proyecto viejo (arranca limpio).
-- WhatsApp de contacto: 5492604647804.
-- Login admin: usuario/contraseña vía Supabase Auth (un único usuario;
-  email y contraseña no se guardan acá porque el repo es público). No
-  planea agregar otros usuarios admin salvo que el negocio crezca mucho.
-- El usuario subió el código a su repo de GitHub existente
-  (`Lucas16AR/stock_app`) y va a seguir trabajando con Claude Code desde
-  su compu, en esa carpeta local.
-
-## Infraestructura creada
-- Proyecto Supabase **stockAPP** (id `kkhwuifybqfgavumwmwv`, región
-  `sa-east-1`, org `Lucas16AR's Org`). Se pausó el proyecto `mundialProde`
-  para liberar el cupo free (2 proyectos gratis máximo).
-- Esquema completo aplicado (productos, categorías, lotes, fotos, ventas)
-  con RLS: lectura pública solo de productos visibles con stock, escritura
-  solo autenticado. Bucket de Storage `productos` para fotos.
-- Detalle completo en `docs/SCHEMA.md` dentro del repo del código.
-
-## Deploy — RESUELTO
-El usuario importó el repo directamente desde el dashboard de Vercel
-(sin depender del conector de este entorno, que no tenía permiso para
-crear proyectos). Está en producción en:
-**https://stock-app-six-woad.vercel.app**
-
-Verificado funcionando: showroom público, login admin, carga de
-productos/categorías/lotes con fotos. Flujo completo probado por el
-usuario en vivo.
-
-## Auditoría de seguridad (2026-08-13) — CERRADA
-El usuario pidió una revisión profunda de seguridad (preocupado en
-particular por si había alguna API key expuesta al inspeccionar la
-página). Resultado: no hay ninguna API de IA/Claude en la app (nunca se
-usó). Lo único visible al inspeccionar es la anon key pública de
-Supabase, que es segura por diseño (protegida por RLS, no por secreto).
-
-Se revisó: políticas RLS (correctas), protección de Server Actions
-(doble capa — RLS de fondo, no depende solo del middleware), políticas
-de Storage, secretos en el repo (ninguno filtrado), `npm audit` (0
-vulnerabilidades), headers HTTP de seguridad (agregados:
-X-Frame-Options, X-Content-Type-Options, Referrer-Policy,
-Permissions-Policy).
-
-Se corrigió un problema real: la subida de fotos no validaba el archivo
-en el servidor (confiaba en la extensión del nombre mandado por el
-cliente, se podía subir un `.html`/`.svg` con script disfrazado de
-imagen). Ahora valida `Content-Type` real contra lista blanca
-(jpg/png/webp/gif) + límite de 5 MB.
-
-Informe completo en `docs/SECURITY.md` dentro del repo. "Leaked Password
-Protection" de Supabase **no se pudo activar**: requiere plan Pro (el
-proyecto está en el free tier), no hay forma de habilitarlo sin upgrade.
-No es crítico — RLS es la capa de autorización real, no la contraseña
-por sí sola. El usuario confirmó que no planea agregar más usuarios
-admin por ahora.
-
-## Diseño de marca "INDY CAPS" (2026-08-13) — HECHO
-El usuario mandó el logo de su emprendimiento (dos versiones: isotipo
-solo y logo completo con texto "INDY CAPS", fondo crema natural). Se
-rediseñó todo el sitio (showroom público + panel admin) para combinar:
-
-- Se pasó de un tema oscuro (negro/dorado) a un tema claro que matchea
-  el crema nativo del logo: fondo `#f5f2ec`, texto casi negro, acento
-  rojo `#d6301f` (ya era el color de marca).
-- Header del showroom: isotipo + texto "INDY CAPS".
-- Login admin: logo completo.
-- Favicon/ícono de pestaña actualizado al isotipo de INDY CAPS.
-
-Entregado como un `.md` de instrucciones más los 5 archivos binarios
-(logos + íconos). Ya aplicado (commit `2c94b99`); el `.md` se borró del
-repo.
-
-## Modo claro/oscuro (2026-08-13) — HECHO
-El usuario pidió que además del tema claro exista un modo oscuro con
-selector, no uno fijo. Se implementó:
-
-- Sistema de tokens de color en `globals.css` (`--background`,
-  `--foreground`, `--card`, `--border`, `--input-border`, `--muted`,
-  `--hover`) que cambian según la clase `dark` en `<html>`. Todos los
-  componentes (showroom + admin, ~24 archivos) migraron de colores fijos
-  a estos tokens.
-- Botón de sol/luna (`ThemeToggle`, nuevo componente) en el header del
-  showroom, el header del admin y el login, que alterna la clase `dark`
-  y guarda la preferencia en `localStorage`.
-- Script inline en `layout.tsx` que aplica el tema guardado (o el del
-  sistema operativo si nunca se eligió ninguno) antes de pintar, para
-  evitar parpadeo de tema equivocado al cargar.
-- `tsc --noEmit` y `eslint` quedaron sin errores ni warnings.
-
-Entregado como un segundo `.md` de instrucciones. Ya aplicado (commit
-`2c94b99`); el `.md` se borró del repo, igual que el del patch de
-seguridad (los cambios quedan en el historial de git y lo vigente está
-en `docs/SECURITY.md` y `CLAUDE.md`).
-
-## Acceso directo al panel admin (2026-11-10) — HECHO
-El usuario pidió un botón/ícono en el showroom para entrar al panel
-admin sin tipear `/admin` a mano. Se agregó un ícono de candado al lado
-del `ThemeToggle` en `src/components/SiteHeader.tsx`, como `next/link`
-a `/admin`. No cambia nada de seguridad: la ruta sigue protegida por el
-login y el middleware existentes (`src/proxy.ts`).
-
-El cambio se aplicó y se comiteó directamente desde una sesión de
-Cowork conectada a esta carpeta vía el puente de dispositivo (commit
-`2f740a8`, "Agregar acceso directo al panel admin desde el showroom").
-Verificado con `tsc --noEmit` y `eslint`, sin errores. La sesión de
-Cowork no tenía credenciales de GitHub, así que el push lo hizo Claude
-Code local; verificado en producción (el candado aparece en el header).
-
-## Supabase pausado y cron keepalive (2026-11-10) — HECHO
-El proyecto Supabase estaba pausado por inactividad (plan gratis, ~7
-días sin uso): el showroom mostraba "No hay gorras disponibles" sin
-error y el login no andaba. Se restauró desde el MCP de Supabase. Para
-que no vuelva a pasar se agregó un cron diario de Vercel (`vercel.json`,
-12:00 UTC) que llama a `/api/keepalive`, una consulta liviana a la base.
-Verificado en producción (`{"ok":true}`).
-
-## Base reiniciada (2026-11-10)
-A pedido del usuario se vaciaron todas las tablas de la app (quedaba un
-lote de prueba) con `truncate ... restart identity`, así los IDs vuelven
-a arrancar en 1. El usuario admin se mantuvo.
-
-## Render (2026-11-10) — RESUELTO
-Seguía conectado al repo un servicio de Render del viejo `stock_app`
-Flask; con cada push intentaba `pip install -r requirements.txt` y
-mandaba un mail de "build failed". El usuario lo borró desde Render. El
-único deploy del repo es Vercel.
+- **Producción**: https://stock-app-six-woad.vercel.app — sana, versión
+  **v2.4.0** (commit `aa01a07`).
+- **Git**: `master` local = `origin/master`. Único deploy: Vercel
+  (proyecto `stock-app`). Cada push a `master` redeploya solo.
+- **Base (Supabase `stockAPP`)**: activa. 50 productos visibles al
+  público (48 con stock + 2 vendidas). La migración de vendidas está
+  aplicada (ver v2.4.0).
+- **Cron keepalive**: funcionando. Primera ejecución automática
+  confirmada el 2026-11-11 a las 12:00 UTC en los logs de Supabase
+  (`HEAD /rest/v1/categorias?select=id` → 200).
 
 ## Pendiente
-- Confirmar en los logs de Vercel que el cron keepalive corra solo
-  (primera ejecución: 2026-11-11 12:00 UTC).
-- Usuario: revisar que en Render no haya quedado una base PostgreSQL
-  huérfana del proyecto viejo.
 
-## Código
-El usuario tiene el código en su repo de GitHub y lo despliega en
-Vercel. Sesiones futuras: si el usuario vuelve a Cowork para seguir
-trabajando en esto, partir de este estado en vez de rehacer el
-diagnóstico inicial.
+1. **Usuario — probar las fotos en el panel** (v2.3.0): cargar un producto
+   con varias fotos del celular (tiene que aparecer "N fotos listas ·
+   X MB" bajo el campo) y borrar una con el ✕ al editar (tiene que
+   desaparecer solo esa foto). No se pudo probar sin el login.
+2. **Usuario — Render**: confirmar que no quedó una base PostgreSQL
+   huérfana del proyecto Flask viejo (el web service ya se borró).
+3. **Decidir — "Ref. interna" en las descripciones**: el showroom la
+   oculta en pantalla (`descripcionPublica` en `src/lib/site.ts`), pero la
+   columna `descripcion` es pública por RLS, así que se puede leer por la
+   API con la anon key. Si esas referencias no deben ser públicas, moverlas
+   a una columna aparte sin lectura para `anon`.
+
+## Cómo trabajar en este repo (para las dos sesiones)
+
+- Cowork no tiene credenciales de GitHub: **comiteá local y dejá la nota
+  acá**; el usuario le pide el push a Claude Code, que revisa y pushea.
+- Los cambios de base (migraciones, políticas RLS) **no quedan en el
+  repo** (no hay carpeta de migraciones). Cuando hagas uno, escribí acá el
+  SQL exacto o su efecto, y si quedó aplicado o no. En v2.4.0 la
+  migración se pidió en el mensaje del commit pero no se aplicó; se
+  detectó recién al verificar en producción.
+- Antes de pushear: `npx tsc --noEmit && npx eslint . && npx next build`.
+- Convenciones de código y marca: ver `CLAUDE.md`. Base y RLS:
+  `docs/SCHEMA.md`. Seguridad: `docs/SECURITY.md`.
+
+---
+
+## Historial de versiones
+
+Las versiones de la app nueva arrancan en 2.0 (la app vieja en Flask
+llegó a V1.1.0). No hay tags de git; cada versión lista sus commits.
+
+### v2.4.0 — Showroom renovado y gorras vendidas visibles (2026-11-12/13)
+Commit `aa01a07` (Cowork) + migración RLS aplicada el 2026-11-13.
+
+- **Banner de marca** arriba del catálogo, con contador de gorras e
+  Instagram (`Hero.tsx`).
+- **Buscador** que ignora tildes y mayúsculas, **orden** por novedad o
+  precio y contador de resultados (`CatalogControls.tsx`,
+  `src/lib/catalogo.ts`). Chips de categoría con cantidad y scroll
+  horizontal en el celular.
+- **Tarjetas**: categoría, badge "Pieza única", cantidad de fotos y estado
+  **"Vendida"** (gris, tachada, al final del catálogo).
+- **Detalle de producto**: galería deslizable con miniaturas y flechas
+  (`Gallery.tsx`), cartel de vendida, botón de WhatsApp fijo abajo en el
+  celular y mensaje "¿tenés alguna parecida?" para las vendidas.
+- **Footer** con WhatsApp, Instagram y ubicación (`SiteFooter.tsx`) y
+  botón flotante de WhatsApp (`WhatsappFloat.tsx`). Datos de la marca en
+  `src/lib/site.ts`.
+- **Open Graph**: el link de cada gorra se comparte con su foto, nombre y
+  precio.
+- Se oculta en el showroom la línea "Ref. interna" de las descripciones
+  (ver Pendiente 3).
+- Nuevos tokens de color de marca que no cambian con el tema: `ink`,
+  `paper`, `mark-bg`, `whatsapp` (`globals.css`, documentados en
+  `CLAUDE.md`).
+- **Cambio de base — mostrar vendidas**: las políticas de lectura pública
+  de `productos`, `fotos_producto` y `producto_categoria` dejaron de exigir
+  `cantidad > 0`; ahora solo exigen `visible_publico = true`. Lo corrió el
+  usuario en el SQL Editor (Cowork lo había llamado
+  `public_read_incluye_vendidas`): borra las políticas `SELECT` de esas
+  tres tablas que mencionaban `cantidad` y crea `public_read_productos`,
+  `public_read_fotos_producto` y `public_read_producto_categoria` (`to
+  anon`). Verificado por la API pública: se ven las 2 vendidas, las 48 con
+  stock y ningún producto oculto. Para sacar una vendida del showroom se
+  destilda "Visible al público".
+
+### v2.3.0 — Productos: precio de venta y fotos (2026-11-11)
+Commits `fe46a51`, `d1263bd` (Cowork) y `17e8a5f` (Claude Code).
+
+- **Hasta 10 fotos por producto** (antes 4). El límite vive en
+  `src/lib/fotos.ts` (`MAX_FOTOS_POR_PRODUCTO`), compartido entre el
+  formulario y la Server Action.
+- **Precio de venta separado del margen**: el margen pasa a ser solo una
+  referencia interna. El formulario muestra el **precio sugerido**
+  recalculado en vivo (`PrecioCalculado.tsx`) y un campo aparte de
+  **precio de venta**, que es el que ve el cliente y el que precarga el
+  formulario de ventas. Cambio de base: columna `productos.precio_venta`
+  (numeric, not null, default 0), aplicada por Cowork.
+- **Fotos achicadas en el navegador** (`FotosInput.tsx`): antes, el envío
+  de una Server Action tenía el tope default de 1 MB y una sola foto de
+  celular (2–5 MB) hacía fallar el formulario. Ahora cada foto se
+  redimensiona a 1600 px como máximo y se pasa a WebP (o JPEG si el
+  navegador no codifica WebP). Muestra el progreso y el peso total, y
+  avisa si no entran todas (máximo 3,8 MB por envío). `bodySizeLimit` en
+  `next.config.ts` pasó a 4 MB; Vercel corta a 4,5 MB por request y no se
+  puede subir. Probado en Chrome: una foto de 5,4 MB quedó en 375 KB.
+- **Arreglo del botón ✕ para borrar foto**: era un `<form>` anidado dentro
+  del formulario del producto; el navegador descarta el interno y el ✕
+  terminaba guardando el producto. Ahora es un `<button formAction>` sobre
+  el formulario exterior. También pasó del rojo fijo al color de acento.
+
+### v2.2.0 — Mantenimiento e infraestructura (2026-11-10)
+Commits `5cf5853`, `89bc937` (Claude Code) y `2f740a8` (Cowork).
+
+- **Cron keepalive**: el plan gratis de Supabase pausa el proyecto tras
+  ~7 días sin actividad (el showroom quedaba vacío sin error y el login
+  no andaba). `vercel.json` llama una vez por día (12:00 UTC) a
+  `/api/keepalive` (`src/app/api/keepalive/route.ts`), que hace un
+  `count` liviano sobre `categorias`. Si se define `CRON_SECRET` en
+  Vercel, solo acepta la llamada del cron.
+- **Acceso al panel desde el showroom**: ícono de candado al lado del
+  selector de tema en el header, que lleva a `/admin`. La ruta sigue
+  protegida por el login y `src/proxy.ts`.
+- **Limpieza del repo**: se borraron `SECURITY_PATCH.md`,
+  `THEME_INDY_CAPS.md` y `THEME_DARK_MODE_INDY_CAPS.md` (instrucciones de
+  patches ya aplicados; quedan en el historial de git) y se sacó el email
+  del admin de este archivo.
+- **Operaciones (sin commit)**:
+  - Se restauró el proyecto Supabase, que estaba pausado.
+  - A pedido del usuario se vaciaron todas las tablas de la app con
+    `truncate ... restart identity`: los IDs volvieron a arrancar en 1.
+    El usuario admin se mantuvo.
+  - Se borró de Render un servicio viejo del `stock_app` Flask que seguía
+    conectado al repo y fallaba en cada push (`requirements.txt` no
+    existe).
+
+### v2.1.0 — Seguridad, marca INDY CAPS y modo oscuro (2026-08-13)
+Commits `a4f44c1`, `58ca425`, `2c94b99`, `5ca1fd0`.
+
+- **Auditoría de seguridad**: no hay ninguna API key secreta en la app;
+  lo único visible al inspeccionar es la anon key de Supabase, pública
+  por diseño (la protección es RLS). Se revisaron RLS, Server Actions,
+  Storage, secretos en el repo y `npm audit` (0 vulnerabilidades).
+  - Se corrigió la subida de fotos: valida el `Content-Type` real contra
+    una lista blanca (jpg/png/webp/gif) y 5 MB por foto, en vez de confiar
+    en la extensión que manda el cliente.
+  - Headers HTTP de seguridad en `next.config.ts` (X-Frame-Options,
+    X-Content-Type-Options, Referrer-Policy, Permissions-Policy).
+  - La lectura pública de `fotos_producto` y `producto_categoria` pasó a
+    exigir que el producto padre sea visible (antes era `USING (true)`).
+  - "Leaked Password Protection" no se pudo activar: requiere el plan Pro.
+  - Detalle en `docs/SECURITY.md`.
+- **Identidad INDY CAPS**: fondo crema, acento rojo `#d6301f`, Bebas Neue +
+  Inter, isotipo en los headers, logo completo en el login, favicon nuevo.
+- **Modo claro/oscuro**: tokens de color en `globals.css`, botón de
+  sol/luna (`ThemeToggle.tsx`) en showroom, admin y login, y script
+  inline en `layout.tsx` que aplica el tema antes de pintar.
+
+### v2.0.0 — App nueva en Next.js + Supabase (2026-08-12)
+Commit `b7c5ad3`.
+
+- Reemplazo completo del `stock_app` en Flask: showroom público sin
+  carrito, con botón de WhatsApp por producto, y panel admin con login
+  para productos, categorías, lotes, ventas e inventario.
+- Supabase: esquema completo con RLS (lectura pública solo de productos
+  visibles con stock, escritura solo autenticado) y bucket `productos`
+  para fotos. Detalle en `docs/SCHEMA.md`.
+- Deploy en Vercel, importado a mano desde el dashboard.
+
+---
+
+## Decisiones tomadas con el usuario
+
+- Stack: Next.js + Supabase (no Flask).
+- Alcance: catálogo público tipo "vidriera" (sin compra online) + panel
+  admin interno. Botón de WhatsApp con mensaje prellenado por producto.
+- Sin migración de datos del proyecto viejo (arrancó limpio).
+- WhatsApp de contacto: 5492604647804. Instagram: `indycaps16`.
+  Ubicación: San Rafael, Mendoza.
+- Un único usuario admin vía Supabase Auth (sin self-signup). No planea
+  agregar más salvo que el negocio crezca. Cualquier usuario logueado
+  tiene acceso total (no hay roles).
+- Las gorras vendidas siguen visibles con el cartel "Vendida" (v2.4.0).
+- El precio que ve el cliente se carga a mano; el margen es solo
+  referencia (v2.3.0).
+
+## Infraestructura
+
+- **Supabase** `stockAPP` (id `kkhwuifybqfgavumwmwv`, región `sa-east-1`,
+  plan gratis). El plan gratis permite 2 proyectos activos; `mundialProde`
+  está pausado para liberar el cupo.
+- **Vercel** proyecto `stock-app` (plan Hobby: un cron por día como
+  máximo y solo la última hora de logs).
+- **GitHub** `Lucas16AR/stock_app` (público).
