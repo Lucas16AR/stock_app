@@ -110,6 +110,7 @@ export async function crearProducto(formData: FormData) {
 
   const nombre = String(formData.get("nombre") || "").trim();
   const descripcion = String(formData.get("descripcion") || "").trim() || null;
+  const ref_interna = String(formData.get("ref_interna") || "").trim() || null;
   const cantidad = Number(formData.get("cantidad") || 0);
   const precio_compra = Number(formData.get("precio_compra") || 0);
   const costo_envio_unitario = Number(formData.get("costo_envio_unitario") || 0);
@@ -128,6 +129,7 @@ export async function crearProducto(formData: FormData) {
     .insert({
       nombre,
       descripcion,
+      ref_interna,
       cantidad,
       precio_compra,
       costo_envio_unitario,
@@ -161,6 +163,7 @@ export async function actualizarProducto(id: number, formData: FormData) {
 
   const nombre = String(formData.get("nombre") || "").trim();
   const descripcion = String(formData.get("descripcion") || "").trim() || null;
+  const ref_interna = String(formData.get("ref_interna") || "").trim() || null;
   const cantidad = Number(formData.get("cantidad") || 0);
   const precio_compra = Number(formData.get("precio_compra") || 0);
   const costo_envio_unitario = Number(formData.get("costo_envio_unitario") || 0);
@@ -177,6 +180,7 @@ export async function actualizarProducto(id: number, formData: FormData) {
     .update({
       nombre,
       descripcion,
+      ref_interna,
       cantidad,
       precio_compra,
       costo_envio_unitario,

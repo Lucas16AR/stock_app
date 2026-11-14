@@ -3,10 +3,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Producto } from "@/lib/types";
+import { ProductoPublico } from "@/lib/types";
 import { formatARS, fotoUrl } from "@/lib/pricing";
 import { SUPABASE_URL } from "@/lib/config";
-import { estaVendida } from "@/lib/catalogo";
+import { estaVendida, SELECT_CATALOGO } from "@/lib/catalogo";
 import { descripcionPublica, INSTAGRAM_URL, INSTAGRAM_USER, SITE_NAME, UBICACION } from "@/lib/site";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -23,14 +23,14 @@ const getProducto = cache(async (id: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("productos")
-    .select("*, fotos_producto(*), categorias(*)")
+    .select(SELECT_CATALOGO)
     .eq("id", id)
     .eq("visible_publico", true)
     .maybeSingle();
-  return data as Producto | null;
+  return data as ProductoPublico | null;
 });
 
-function fotosOrdenadas(producto: Producto) {
+function fotosOrdenadas(producto: ProductoPublico) {
   return (producto.fotos_producto ?? [])
     .slice()
     .sort((a, b) => a.orden - b.orden)

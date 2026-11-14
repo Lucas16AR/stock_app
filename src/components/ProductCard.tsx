@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Producto } from "@/lib/types";
+import { ProductoPublico } from "@/lib/types";
 import { formatARS, fotoUrl } from "@/lib/pricing";
 import { SUPABASE_URL } from "@/lib/config";
 import { estaVendida } from "@/lib/catalogo";
@@ -9,7 +9,7 @@ export default function ProductCard({
   producto,
   prioridad = false,
 }: {
-  producto: Producto;
+  producto: ProductoPublico;
   prioridad?: boolean;
 }) {
   const fotos = (producto.fotos_producto ?? []).slice().sort((a, b) => a.orden - b.orden);

@@ -41,6 +41,18 @@ export default function ProductForm({
         />
       </div>
 
+      <div>
+        <label className="mb-1 block text-xs text-muted">
+          Referencia interna — no se muestra en la página
+        </label>
+        <input
+          name="ref_interna"
+          defaultValue={producto?.ref_interna ?? ""}
+          placeholder="Ej. AFA 12"
+          className="w-full rounded-lg border border-dashed border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="mb-1 block text-xs text-muted">Stock *</label>

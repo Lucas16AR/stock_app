@@ -129,6 +129,35 @@ y solo exigen `visible_publico = true` (migración
 invisible para anónimos. Para sacar una vendida del showroom, se destilda
 "Visible al público" en el admin.
 
+## Columnas internas cerradas a la API pública (tarea 001, 2026-11-14)
+
+Problema: RLS limita **qué filas** lee un visitante, no **qué columnas**.
+Con la anon key (pública, está en el navegador) se podía consultar la API
+de Supabase directo y leer de cada gorra publicada `precio_compra`,
+`margen`, `costo_envio_unitario`, `costo_extra`, `lote_id` y la "Ref.
+interna" guardada en `descripcion`. Además anon tenía todos los permisos
+de tabla por defecto de Supabase (INSERT, UPDATE, DELETE, TRUNCATE); RLS
+frenaba las escrituras, pero no había razón para que existieran.
+
+Arreglo (dos migraciones en `supabase/migrations/`):
+
+1. `20261114000001_001a_ref_interna.sql` — columna `productos.ref_interna`
+   (solo admin) y traslado de las líneas `Ref. interna: …` de
+   `descripcion` a esa columna. Se aplica **antes** del deploy.
+2. `20261114000002_001b_permisos_anon.sql` — anon queda solo con `SELECT`
+   en `fotos_producto`, `producto_categoria` y `categorias`, `SELECT` de
+   las columnas públicas de `productos`, y sin ningún permiso en `lotes` y
+   `ventas`. Se aplica **después** del deploy: el código viejo pedía
+   `select("*")` y fallaría.
+
+El showroom pide columnas explícitas (`SELECT_CATALOGO` en
+`src/lib/catalogo.ts`) y usa el tipo `ProductoPublico`, así el compilador
+frena cualquier intento de mostrar un costo en una página pública.
+Detalle de permisos en `docs/SCHEMA.md`.
+
+Fuera de alcance (riesgo bajo, queda para otra tarea): las fotos de
+productos ocultos siguen en el bucket público; sus URLs llevan un UUID.
+
 ## Resumen de cambios aplicados
 En el repo:
 - `src/app/admin/(panel)/actions.ts`: validación server-side de tipo y

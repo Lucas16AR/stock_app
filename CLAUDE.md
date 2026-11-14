@@ -47,6 +47,13 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
   convención si agregás columnas.
 - Las mutaciones son Server Actions (`"use server"`), no hay API routes
   para CRUD.
+- El showroom **nunca** usa `select("*")` sobre `productos`: el rol anon
+  solo puede leer ciertas columnas (ver "Permisos de tabla del rol anon"
+  en `docs/SCHEMA.md`). Usá `SELECT_CATALOGO` de `src/lib/catalogo.ts` y
+  el tipo `ProductoPublico`. Una columna nueva que tenga que verse en la
+  página necesita también una migración con su `GRANT`.
+- Los cambios de base van como archivo en `supabase/migrations/`, con un
+  comentario de cuándo se aplican respecto del deploy.
 - `revalidatePath` se llama después de cada mutación relevante (incluyendo
   siempre `"/"` cuando afecta al showroom público).
 

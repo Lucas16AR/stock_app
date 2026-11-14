@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Producto, Categoria } from "@/lib/types";
-import { armarCatalogo, estaVendida, parseOrden } from "@/lib/catalogo";
+import { ProductoPublico, Categoria } from "@/lib/types";
+import { armarCatalogo, estaVendida, parseOrden, SELECT_CATALOGO } from "@/lib/catalogo";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Hero from "@/components/Hero";
@@ -25,15 +25,15 @@ export default async function HomePage(props: PageProps<"/">) {
   const supabase = await createClient();
 
   const [{ data: categorias }, { data: productos }] = await Promise.all([
-    supabase.from("categorias").select("*").order("nombre").returns<Categoria[]>(),
+    supabase.from("categorias").select("id, nombre").order("nombre").returns<Categoria[]>(),
     // RLS ya limita lo que ve un visitante, pero filtramos explícito para
     // que el admin logueado vea el showroom igual que un cliente.
     supabase
       .from("productos")
-      .select("*, fotos_producto(*), categorias(*)")
+      .select(SELECT_CATALOGO)
       .eq("visible_publico", true)
       .order("fecha_creacion", { ascending: false })
-      .returns<Producto[]>(),
+      .returns<ProductoPublico[]>(),
   ]);
 
   const todos = productos ?? [];

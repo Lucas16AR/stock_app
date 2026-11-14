@@ -12,13 +12,17 @@ Proyecto Supabase: **stockAPP** (región `sa-east-1`, org `Lucas16AR's Org`).
   muestra al público**), `precio_venta` (numeric, el precio real que
   ve el cliente — se carga a mano en el panel admin, no se calcula
   solo), `lote_id` (FK a `lotes`, `SET NULL` on delete),
-  `visible_publico` (bool, default `true`), `fecha_creacion`.
+  `ref_interna` (text, nullable — referencia de compra, ej. `AFA 12`;
+  **solo admin**, antes vivía como una línea `Ref. interna: …` dentro de
+  `descripcion`), `visible_publico` (bool, default `true`),
+  `fecha_creacion`.
 - **`producto_categoria`** — tabla intermedia muchos-a-muchos
   (`producto_id`, `categoria_id`), habilita el embedding implícito de
   PostgREST (`select("*, categorias(*)")` funciona directo).
 - **`fotos_producto`** — `id`, `producto_id` (FK, `CASCADE`), `path`
-  (ruta dentro del bucket `productos`), `orden`. Máximo 4 fotos por
-  producto (validado en la server action, no en la base).
+  (ruta dentro del bucket `productos`), `orden`. Máximo 10 fotos por
+  producto (`MAX_FOTOS_POR_PRODUCTO` en `src/lib/fotos.ts`, validado en la
+  server action, no en la base).
 - **`ventas`** — `id`, `producto_id` (FK, `RESTRICT`), `cantidad`,
   `precio_venta`, `fecha`. Al insertar una venta, la server action
   descuenta `productos.cantidad` en el mismo flujo (no hay trigger).
@@ -62,6 +66,42 @@ Todas las tablas tienen RLS habilitado:
   tablas — no hay un rol "admin" separado, cualquier usuario logueado
   vía Supabase Auth tiene acceso total. Como no hay self-signup, la
   única forma de entrar es con un usuario creado a mano.
+
+## Permisos de tabla del rol `anon` (tarea 001)
+
+RLS decide **qué filas** ve un visitante; los permisos de tabla deciden
+**qué columnas** y qué operaciones. Con la migración
+`supabase/migrations/20261114000002_001b_permisos_anon.sql`:
+
+- `productos`: solo `SELECT` de `id`, `nombre`, `descripcion`,
+  `cantidad`, `precio_venta`, `visible_publico`, `fecha_creacion`. Los
+  costos, el margen, `lote_id` y `ref_interna` no son legibles; un
+  `select=*` como anon da *permission denied* (42501).
+- `fotos_producto`, `producto_categoria`, `categorias`: solo `SELECT`.
+- `lotes`, `ventas`: ningún permiso.
+- Sin `INSERT`/`UPDATE`/`DELETE`/`TRUNCATE` para anon en ninguna tabla.
+
+Consecuencias para el código:
+
+- El showroom tiene que pedir columnas explícitas: usa `SELECT_CATALOGO` /
+  `COLUMNAS_PUBLICAS` (`src/lib/catalogo.ts`) y el tipo `ProductoPublico`.
+- **Una columna nueva en `productos` no es legible por anon** hasta
+  agregarla al `GRANT` (con una migración nueva), a `COLUMNAS_PUBLICAS` y
+  a `ProductoPublico`.
+- Las políticas RLS de `fotos_producto` y `producto_categoria` leen
+  `productos.id` y `productos.visible_publico` como anon: esas columnas
+  tienen que seguir en el `GRANT`.
+- Una **tabla nueva** recibe de Supabase todos los permisos para anon por
+  defecto: revisarlos en la misma migración que la crea.
+
+## Migraciones
+
+Desde la tarea 001, todo cambio de base va como archivo en
+`supabase/migrations/` (`AAAAMMDDhhmmss_descripcion.sql`), con un
+comentario que dice **cuándo se aplica respecto del deploy**. Las
+anteriores (esquema inicial, RLS de fotos, vendidas, `precio_venta`) se
+aplicaron sin archivo y están descritas en este documento y en
+`docs/SECURITY.md`.
 
 ## Storage
 
