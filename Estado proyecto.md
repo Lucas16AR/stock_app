@@ -30,13 +30,11 @@ el detalle de cada cambio. **Actualizado: 2026-11-14.**
    con varias fotos del celular (tiene que aparecer "N fotos listas ·
    X MB" bajo el campo) y borrar una con el ✕ al editar (tiene que
    desaparecer solo esa foto). No se pudo probar sin el login.
-2. **Usuario — Render**: confirmar que no quedó una base PostgreSQL
-   huérfana del proyecto Flask viejo (el web service ya se borró).
-3. **Tarea 002 (a proponer por Cowork)** — permisos por defecto de las
+2. **Tarea 002 (a proponer por Cowork)** — permisos por defecto de las
    tablas nuevas: Supabase le sigue dando todos los permisos a anon en
    cada tabla que se cree. Hasta resolverlo, revisar los permisos en la
    misma migración que crea la tabla (regla en `docs/SCHEMA.md`).
-4. **Posible tarea (riesgo bajo)** — las fotos de productos ocultos
+3. **Posible tarea (riesgo bajo)** — las fotos de productos ocultos
    siguen en el bucket público; sus URLs llevan un UUID. Quedó fuera de
    alcance de la 001.
 
@@ -210,7 +208,8 @@ Commits `5cf5853`, `89bc937` (Claude Code) y `2f740a8` (Cowork).
     El usuario admin se mantuvo.
   - Se borró de Render un servicio viejo del `stock_app` Flask que seguía
     conectado al repo y fallaba en cada push (`requirements.txt` no
-    existe).
+    existe). El 2026-11-14 Capi confirmó que en Render no queda nada del
+    proyecto viejo (ni el servicio ni una base).
 
 ### v2.1.0 — Seguridad, marca INDY CAPS y modo oscuro (2026-08-13)
 Commits `a4f44c1`, `58ca425`, `2c94b99`, `5ca1fd0`.
