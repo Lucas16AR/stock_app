@@ -1,4 +1,4 @@
-// Íconos SVG compartidos del showroom.
+// Íconos SVG compartidos (showroom y panel admin).
 
 export function WhatsappIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
@@ -38,5 +38,60 @@ export function PinIcon({ className = "h-5 w-5" }: { className?: string }) {
       <path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z" />
       <circle cx="12" cy="9.5" r="2.5" />
     </svg>
+  );
+}
+
+// ---------- Íconos del panel admin (trazo, heredan el color del texto) ----------
+
+function IconoTrazo({ className = "h-5 w-5", children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className={`${className} fill-none stroke-current`}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {children}
+    </svg>
+  );
+}
+
+export function TrashIcon({ className }: { className?: string }) {
+  return (
+    <IconoTrazo className={className}>
+      <path d="M3 6h18" />
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+    </IconoTrazo>
+  );
+}
+
+export function EyeIcon({ className }: { className?: string }) {
+  return (
+    <IconoTrazo className={className}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </IconoTrazo>
+  );
+}
+
+export function SpeakerIcon({ className }: { className?: string }) {
+  return (
+    <IconoTrazo className={className}>
+      <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
+    </IconoTrazo>
+  );
+}
+
+export function SpeakerOffIcon({ className }: { className?: string }) {
+  return (
+    <IconoTrazo className={className}>
+      <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+      <path d="m16 9 5 6M21 9l-5 6" />
+    </IconoTrazo>
   );
 }

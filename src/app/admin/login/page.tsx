@@ -3,10 +3,12 @@
 import { useActionState } from "react";
 import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
+import BotonEnviar from "@/components/admin/BotonEnviar";
+import { btnPrimario } from "@/components/admin/estilos";
 import { login } from "./actions";
 
 export default function LoginPage() {
-  const [state, formAction, pending] = useActionState(login, undefined);
+  const [state, formAction] = useActionState(login, undefined);
 
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-background px-4">
@@ -53,16 +55,12 @@ export default function LoginPage() {
           </div>
 
           {state?.error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
+            <p role="alert" className="text-sm text-accent">{state.error}</p>
           )}
 
-          <button
-            type="submit"
-            disabled={pending}
-            className="mt-2 rounded-lg bg-accent px-4 py-2 font-semibold text-white transition disabled:opacity-60"
-          >
-            {pending ? "Ingresando..." : "Ingresar"}
-          </button>
+          <BotonEnviar textoPendiente="Ingresando…" className={`${btnPrimario} mt-2`}>
+            Ingresar
+          </BotonEnviar>
         </div>
       </form>
     </main>

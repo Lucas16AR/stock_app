@@ -2,9 +2,14 @@ import { Categoria, Lote, Producto } from "@/lib/types";
 import { fotoUrl } from "@/lib/pricing";
 import { SUPABASE_URL } from "@/lib/config";
 import { eliminarFoto } from "@/app/admin/(panel)/actions";
+import { MAX_FOTOS_POR_PRODUCTO } from "@/lib/fotos";
+import type { Resultado } from "@/lib/acciones";
 import PrecioCalculado from "./PrecioCalculado";
 import FotosInput from "./FotosInput";
-import { MAX_FOTOS_POR_PRODUCTO } from "@/lib/fotos";
+import FormAccion from "./FormAccion";
+import BotonEnviar from "./BotonEnviar";
+import BotonBorrar from "./BotonBorrar";
+import { btnPrimario } from "./estilos";
 
 export default function ProductForm({
   producto,
@@ -15,12 +20,12 @@ export default function ProductForm({
   producto?: Producto;
   categorias: Categoria[];
   lotes: Lote[];
-  action: (formData: FormData) => void;
+  action: (formData: FormData) => Promise<Resultado>;
 }) {
   const categoriaIds = new Set(producto?.categorias?.map((c) => c.id));
 
   return (
-    <form action={action} className="flex max-w-2xl flex-col gap-4">
+    <FormAccion accion={action} className="flex max-w-2xl flex-col gap-4">
       <div>
         <label className="mb-1 block text-xs text-muted">Nombre *</label>
         <input
@@ -131,19 +136,18 @@ export default function ProductForm({
                   alt=""
                   className="h-24 w-24 rounded-lg object-cover ring-1 ring-border"
                 />
-                {/* No puede ser un <form> propio: quedaría anidado dentro del
-                    form del producto (HTML no lo permite y el ✕ terminaba
-                    guardando el producto). formAction hace que este botón
-                    envíe el form exterior a otra acción. */}
-                <button
-                  type="submit"
-                  formAction={eliminarFoto.bind(null, f.id, producto.id)}
-                  formNoValidate
-                  aria-label="Borrar foto"
-                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs text-white"
+                {/* Botón común (type="button") que abre la confirmación: no
+                    puede ser un <form> propio porque quedaría anidado dentro
+                    del form del producto. */}
+                <BotonBorrar
+                  accion={eliminarFoto.bind(null, f.id, producto.id)}
+                  etiqueta="Borrar esta foto"
+                  titulo="¿Borrar esta foto?"
+                  detalle="Se borra de la gorra y de la tienda. No se puede deshacer. Lo demás que hayas cambiado en el formulario no se pierde."
+                  className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs text-white shadow transition active:scale-90"
                 >
                   ✕
-                </button>
+                </BotonBorrar>
               </div>
             ))}
           </div>
@@ -159,12 +163,9 @@ export default function ProductForm({
         />
       </div>
 
-      <button
-        type="submit"
-        className="mt-2 rounded-lg bg-accent px-4 py-2 font-semibold text-white"
-      >
+      <BotonEnviar textoPendiente="Guardando…" className={`${btnPrimario} mt-2`}>
         Guardar producto
-      </button>
-    </form>
+      </BotonEnviar>
+    </FormAccion>
   );
 }

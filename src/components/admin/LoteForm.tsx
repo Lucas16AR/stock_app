@@ -1,14 +1,18 @@
 import { Lote } from "@/lib/types";
+import type { Resultado } from "@/lib/acciones";
+import FormAccion from "./FormAccion";
+import BotonEnviar from "./BotonEnviar";
+import { btnPrimario } from "./estilos";
 
 export default function LoteForm({
   lote,
   action,
 }: {
   lote?: Lote;
-  action: (formData: FormData) => void;
+  action: (formData: FormData) => Promise<Resultado>;
 }) {
   return (
-    <form action={action} className="flex max-w-md flex-col gap-4">
+    <FormAccion accion={action} className="flex max-w-md flex-col gap-4">
       <div>
         <label className="mb-1 block text-xs text-muted">Costo de envío</label>
         <input
@@ -27,12 +31,9 @@ export default function LoteForm({
           className="w-full rounded-lg border border-input-border bg-card px-3 py-2 text-sm outline-none focus:border-accent"
         />
       </div>
-      <button
-        type="submit"
-        className="mt-2 rounded-lg bg-accent px-4 py-2 font-semibold text-white"
-      >
+      <BotonEnviar textoPendiente="Guardando…" className={`${btnPrimario} mt-2`}>
         Guardar lote
-      </button>
-    </form>
+      </BotonEnviar>
+    </FormAccion>
   );
 }

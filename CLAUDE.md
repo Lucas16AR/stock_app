@@ -47,6 +47,26 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
   convención si agregás columnas.
 - Las mutaciones son Server Actions (`"use server"`), no hay API routes
   para CRUD.
+- **Toda Server Action del admin devuelve `Resultado`**
+  (`src/lib/acciones.ts`: `exito(mensaje, redirigirA?)` o
+  `fallo(error)`), nunca ignora el `error` de Supabase y no usa
+  `redirect()`: si hay que ir a otra página, devuelve `redirigirA` y
+  navega el cliente después de mostrar el aviso. `mensajeError()` traduce
+  los errores de Postgres a castellano. En un archivo `"use server"` solo
+  se exportan acciones (todo lo exportado queda invocable desde el
+  navegador); los helpers van en `src/lib/`.
+- Componentes del admin para esas acciones (`src/components/admin/`):
+  - `FormAccion` — el `<form>`: llama a la acción, muestra el aviso con
+    sonido y navega si hace falta. No vacía el formulario si hubo error.
+  - `BotonEnviar` — botón de envío con spinner, deshabilitado mientras
+    corre (`textoPendiente`: "Guardando…", "Registrando…").
+  - `BotonBorrar` — **toda acción destructiva** pasa por acá: diálogo de
+    confirmación con `titulo`, `detalle` (consecuencias) o `bloqueo`
+    (cuando no se puede borrar y qué hacer en su lugar).
+  - `avisar.exito / borrado / error` (`avisar.ts`) para avisos sueltos;
+    `<Avisos />` va una sola vez en el layout del panel.
+  - Clases de botón en `estilos.ts` (`btnPrimario`, `btnSecundario`,
+    `btnBorrarIcono`, `btnIcono`), todas con `active:scale-95`.
 - El showroom **nunca** usa `select("*")` sobre `productos`: el rol anon
   solo puede leer ciertas columnas (ver "Permisos de tabla del rol anon"
   en `docs/SCHEMA.md`). Usá `SELECT_CATALOGO` de `src/lib/catalogo.ts` y
@@ -64,7 +84,8 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
   (`mark.png` isotipo para los headers, `logo.png` completo para el login).
 - El sitio tiene **modo claro y oscuro**. Los colores viven como tokens en
   `src/app/globals.css` (`--background`, `--foreground`, `--card`,
-  `--border`, `--input-border`, `--muted`, `--hover`, `--accent`), con los
+  `--border`, `--input-border`, `--muted`, `--hover`, `--accent`,
+  `--exito` — verde de los avisos de "listo" del admin), con los
   valores del modo oscuro bajo `.dark`. Además hay tokens de marca que
   **no** cambian con el tema: `ink` (superficie siempre oscura: banner,
   badges sobre fotos), `paper` (crema sobre `ink`), `mark-bg` (fondo

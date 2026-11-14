@@ -38,7 +38,7 @@ export default async function InventarioPage() {
             {productos.map((p) => (
               <tr key={p.id} className="border-t border-border bg-card">
                 <td className="px-4 py-2 text-foreground">{p.nombre}</td>
-                <td className={`px-4 py-2 ${p.cantidad <= 2 ? "text-red-600 dark:text-red-400" : ""}`}>
+                <td className={`px-4 py-2 ${p.cantidad <= 2 ? "font-semibold text-accent" : ""}`}>
                   {p.cantidad}
                 </td>
                 <td className="px-4 py-2">{formatARS(costoTotal(p))}</td>
