@@ -12,12 +12,14 @@ el detalle de cada cambio. **Actualizado: 2026-11-14.**
 ## Estado actual
 
 - **Producción**: https://stock-app-six-woad.vercel.app — sana, versión
-  **v2.4.0** (commit `aa01a07`).
-- **Git**: `master` local = `origin/master`. Único deploy: Vercel
-  (proyecto `stock-app`). Cada push a `master` redeploya solo.
+  **v2.5.0** (código en `c7e57f3`).
+- **Git**: `master` local = `origin/master`, sin ramas de tarea
+  abiertas. Único deploy: Vercel (proyecto `stock-app`). Cada push a
+  `master` redeploya solo.
 - **Base (Supabase `stockAPP`)**: activa. 50 productos visibles al
-  público (48 con stock + 2 vendidas). La migración de vendidas está
-  aplicada (ver v2.4.0).
+  público (48 con stock + 2 vendidas). Todas las migraciones están
+  aplicadas: la de vendidas (v2.4.0) y las dos de la tarea 001 (v2.5.0).
+  El visitante solo lee las columnas públicas y no puede escribir nada.
 - **Cron keepalive**: funcionando. Primera ejecución automática
   confirmada el 2026-11-11 a las 12:00 UTC en los logs de Supabase
   (`HEAD /rest/v1/categorias?select=id` → 200).
@@ -30,9 +32,13 @@ el detalle de cada cambio. **Actualizado: 2026-11-14.**
    desaparecer solo esa foto). No se pudo probar sin el login.
 2. **Usuario — Render**: confirmar que no quedó una base PostgreSQL
    huérfana del proyecto Flask viejo (el web service ya se borró).
-3. **Tarea 001 (prioridad 1, seguridad)** — ajustar qué datos de
-   `productos` puede leer un visitante. Detalle en `tareas/001-...md`
-   (carpeta privada, no se sube al repo).
+3. **Tarea 002 (a proponer por Cowork)** — permisos por defecto de las
+   tablas nuevas: Supabase le sigue dando todos los permisos a anon en
+   cada tabla que se cree. Hasta resolverlo, revisar los permisos en la
+   misma migración que crea la tabla (regla en `docs/SCHEMA.md`).
+4. **Posible tarea (riesgo bajo)** — las fotos de productos ocultos
+   siguen en el bucket público; sus URLs llevan un UUID. Quedó fuera de
+   alcance de la 001.
 
 ## Cómo trabajar en este repo (para las dos sesiones)
 
@@ -58,8 +64,9 @@ historial.
 - Cowork no tiene credenciales de GitHub: **comiteá local y dejá la nota
   acá**; el usuario le pide el push a Claude Code, que revisa y pushea.
 - Los cambios de base (migraciones, políticas RLS) van como archivo en
-  `supabase/migrations/` (la carpeta la crea la tarea 001; antes no
-  existía). Anotá acá si quedaron aplicados o no. En v2.4.0 la
+  `supabase/migrations/` (existe desde la tarea 001), con un comentario
+  de cuándo se aplican respecto del deploy. Anotá acá si quedaron
+  aplicados o no. En v2.4.0 la
   migración se pidió en el mensaje del commit pero no se aplicó; se
   detectó recién al verificar en producción.
 - Antes de pushear: `npx tsc --noEmit && npx eslint . && npx next build`.
@@ -74,6 +81,51 @@ Las versiones de la app nueva arrancan en 2.0 (la app vieja en Flask
 llegó a V1.1.0). Tags de git: `first_version` y `v1.0` son de la app
 Flask vieja; `v2.0.0` marca el arranque de la app nueva (`b7c5ad3`). Las
 versiones 2.1.0 a 2.4.0 no tienen tag; cada una lista sus commits.
+
+### v2.5.0 — Columnas internas cerradas a la API pública (2026-11-14)
+Tarea 001 (prioridad 1, seguridad). Commits `250e985` (Cowork: roles y
+flujo de tareas) y `c7e57f3` (Claude Code), más dos migraciones
+aplicadas en producción.
+
+- **El problema**: RLS limitaba qué filas lee un visitante, pero no qué
+  columnas. Con la anon key, que es pública, se podían leer por la API el
+  `precio_compra`, el `margen`, los costos de envío y extra, el `lote_id`
+  y la "Ref. interna" de cada gorra publicada. Además anon tenía todos los
+  permisos de tabla por defecto de Supabase (RLS frenaba las escrituras,
+  pero los permisos existían).
+- **Migración `20261114000001_001a_ref_interna.sql`** (aplicada por Cowork
+  el 2026-11-14 ~02:20, antes del deploy): columna nueva
+  `productos.ref_interna`, solo para el admin, y traslado de las
+  referencias que estaban como línea `Ref. interna: …` en `descripcion`.
+  Resultado: los 50 productos con `ref_interna` cargada y la descripción
+  vacía (era lo único que tenían).
+- **Código** (deploy de `c7e57f3` el 2026-11-14 05:32 UTC):
+  - El showroom pide columnas explícitas (`SELECT_CATALOGO` y
+    `COLUMNAS_PUBLICAS` en `src/lib/catalogo.ts`) y usa el tipo
+    `ProductoPublico`. El compilador frena cualquier uso de costos,
+    margen, lote o referencia en una página pública.
+  - Admin: campo "Referencia interna — no se muestra en la página" en el
+    formulario de producto, guardado en crear y editar. Capi lo probó en
+    la vista previa.
+- **Migración `20261114000002_001b_permisos_anon.sql`** (aplicada por
+  Cowork el 2026-11-14 ~05:35, después del deploy): anon queda solo con
+  `SELECT` de las 7 columnas públicas de `productos`, `SELECT` de
+  `fotos_producto`, `producto_categoria` y `categorias`, y ningún permiso
+  en `lotes` y `ventas`. El archivo incluye el SQL para volver atrás.
+- **Verificado en producción**: `select=*` y cada columna interna → 42501;
+  las columnas públicas → 50 filas; ninguna descripción conserva la
+  referencia; `lotes` y `ventas` → 42501; PATCH, POST y DELETE sin login →
+  42501; el inicio muestra 48 disponibles + 2 vendidas; el detalle y el
+  Open Graph andan; `/api/keepalive` → `{"ok":true}`.
+- **Reglas nuevas** (en `CLAUDE.md` y `docs/SCHEMA.md`):
+  - El showroom nunca usa `select("*")` sobre `productos`.
+  - Una columna nueva que tenga que verse en la página necesita una
+    migración con su `GRANT`, y sumarla a `COLUMNAS_PUBLICAS` y a
+    `ProductoPublico`.
+  - Las migraciones van como archivo en `supabase/migrations/`.
+- **Proceso**: primera tarea con el flujo nuevo (tarea escrita por
+  Cowork, aprobada por Capi, hecha por Claude Code en su rama, revisada
+  por Cowork y pasada a producción en 4 pasos con OK de Capi).
 
 ### v2.4.0 — Showroom renovado y gorras vendidas visibles (2026-11-12/13)
 Commit `aa01a07` (Cowork) + migración RLS aplicada el 2026-11-13.

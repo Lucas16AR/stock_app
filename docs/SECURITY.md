@@ -155,6 +155,14 @@ El showroom pide columnas explícitas (`SELECT_CATALOGO` en
 frena cualquier intento de mostrar un costo en una página pública.
 Detalle de permisos en `docs/SCHEMA.md`.
 
+**Estado: cerrado en producción el 2026-11-14.** Las dos migraciones
+están aplicadas, en el orden previsto (001a → deploy de `c7e57f3` →
+001b). Verificado con la anon key contra la API: `select=*` y cada
+columna interna dan 42501; las columnas públicas devuelven los 50
+productos visibles; ninguna descripción conserva la referencia; `lotes` y
+`ventas` dan 42501; PATCH/POST/DELETE sin login dan 42501; el showroom y
+el cron keepalive siguen andando.
+
 Fuera de alcance (riesgo bajo, queda para otra tarea): las fotos de
 productos ocultos siguen en el bucket público; sus URLs llevan un UUID.
 

@@ -71,7 +71,8 @@ Todas las tablas tienen RLS habilitado:
 
 RLS decide **qué filas** ve un visitante; los permisos de tabla deciden
 **qué columnas** y qué operaciones. Con la migración
-`supabase/migrations/20261114000002_001b_permisos_anon.sql`:
+`supabase/migrations/20261114000002_001b_permisos_anon.sql` (aplicada en
+producción el 2026-11-14):
 
 - `productos`: solo `SELECT` de `id`, `nombre`, `descripcion`,
   `cantidad`, `precio_venta`, `visible_publico`, `fecha_creacion`. Los
