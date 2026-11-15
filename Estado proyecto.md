@@ -2,7 +2,7 @@
 
 Archivo de traspaso entre sesiones (Claude Code local y Cowork). Arriba
 está el estado actual y lo pendiente; abajo, el historial por versión con
-el detalle de cada cambio. **Actualizado: 2026-11-14.**
+el detalle de cada cambio. **Actualizado: 2026-11-15.**
 
 > El repo de GitHub es **público**: no escribas acá emails, contraseñas
 > ni datos personales.
@@ -12,7 +12,7 @@ el detalle de cada cambio. **Actualizado: 2026-11-14.**
 ## Estado actual
 
 - **Producción**: https://stock-app-six-woad.vercel.app — sana, versión
-  **v2.5.0** (código en `c7e57f3`).
+  **v2.6.0** (código en `3a06fd3`).
 - **Git**: `master` local = `origin/master`, sin ramas de tarea
   abiertas. Único deploy: Vercel (proyecto `stock-app`). Cada push a
   `master` redeploya solo.
@@ -30,13 +30,17 @@ el detalle de cada cambio. **Actualizado: 2026-11-14.**
    con varias fotos del celular (tiene que aparecer "N fotos listas ·
    X MB" bajo el campo) y borrar una con el ✕ al editar (tiene que
    desaparecer solo esa foto). No se pudo probar sin el login.
-2. **Tarea 002 (a proponer por Cowork)** — permisos por defecto de las
-   tablas nuevas: Supabase le sigue dando todos los permisos a anon en
-   cada tabla que se cree. Hasta resolverlo, revisar los permisos en la
-   misma migración que crea la tabla (regla en `docs/SCHEMA.md`).
-3. **Posible tarea (riesgo bajo)** — las fotos de productos ocultos
+2. **Tareas aprobadas, en este orden: 004 → 005 → 003** (detalle en
+   `tareas/`). Cada una arranca cuando Capi la pide.
+3. **Posible tarea (a proponer por Cowork)** — permisos por defecto de
+   las tablas nuevas: Supabase le sigue dando todos los permisos a anon
+   en cada tabla que se cree. Hasta resolverlo, revisar los permisos en
+   la misma migración que crea la tabla (regla en `docs/SCHEMA.md`).
+4. **Posible tarea (riesgo bajo)** — las fotos de productos ocultos
    siguen en el bucket público; sus URLs llevan un UUID. Quedó fuera de
    alcance de la 001.
+5. **Para la 003** (nota de la revisión de la 002): las fechas del admin
+   (`fechaCorta()` en lotes) todavía no fijan la zona horaria.
 
 ## Cómo trabajar en este repo (para las dos sesiones)
 
@@ -78,7 +82,58 @@ historial.
 Las versiones de la app nueva arrancan en 2.0 (la app vieja en Flask
 llegó a V1.1.0). Tags de git: `first_version` y `v1.0` son de la app
 Flask vieja; `v2.0.0` marca el arranque de la app nueva (`b7c5ad3`). Las
-versiones 2.1.0 a 2.4.0 no tienen tag; cada una lista sus commits.
+versiones 2.1.0 en adelante no tienen tag; cada una lista sus commits.
+
+### v2.6.0 — Panel que responde: botones, confirmaciones y avisos con sonido (2026-11-14)
+Tarea 002. Commit `3a06fd3` (Claude Code). Sin cambios de base ni del
+showroom público. Revisada por Cowork y probada por Capi en la vista
+previa antes del merge. Deploy a producción el 2026-11-14.
+
+- **Botones con reacción**: los botones de guardar y registrar muestran
+  un spinner y un texto de progreso ("Guardando…", "Registrando…",
+  "Ingresando…"), y quedan deshabilitados mientras la acción corre. Si se
+  toca dos veces, la acción corre una sola vez. Todos los botones se
+  achican al tocarlos. Al tocar el menú aparece al instante un esqueleto
+  de carga, y la sección activa queda resaltada.
+- **Confirmación antes de borrar**: lotes, productos, categorías y fotos
+  piden confirmación en un diálogo que dice qué se borra y qué pasa
+  después (por ejemplo, "Tiene 12 gorras: van a quedar sin lote"). El
+  foco arranca en Cancelar, y Escape o un toque afuera cierran el diálogo
+  sin borrar. Si una gorra tiene ventas, no ofrece borrarla: lo explica y
+  sugiere ocultarla. "Eliminar" pasó a un ícono de tacho, separado de
+  "Editar".
+- **Avisos con sonido**: cada acción muestra un aviso (verde si salió
+  bien, rojo con el motivo si no). Aparecen abajo, para no tapar el
+  menú en el celular. El sonido se arma con Web Audio, sin archivos ni
+  librerías: dos notas para éxito, un tono que baja para borrado y dos
+  pulsos graves para error. El parlante del header lo silencia, y la
+  opción se recuerda.
+- **Ver la tienda desde el admin**: "Ver tienda" en el header y "Ver en la
+  tienda" al editar una gorra (deshabilitado si está oculta). Los dos
+  abren en otra pestaña.
+- **Por dentro**:
+  - Toda Server Action devuelve `Resultado` (`src/lib/acciones.ts`). No
+    se usa `redirect()` y nunca se ignora el error de Supabase. Los
+    errores de Postgres se traducen a castellano.
+  - Borrar o editar algo que ya no existe se avisa, en vez de decir
+    "borrado".
+  - Borrar una gorra borra primero la fila y después las fotos. Antes era
+    al revés: si la fila no se podía borrar, las fotos ya se habían
+    perdido.
+  - Las fotos que fallan al subir se informan en el aviso y no dejan
+    archivos huérfanos.
+  - Si una venta se registra pero falla el descuento de stock, se avisa
+    como error.
+  - Un formulario con error conserva lo escrito.
+- **Componentes nuevos** en `src/components/admin/`: `FormAccion`,
+  `BotonEnviar`, `BotonBorrar`, `Avisos`, `avisar.ts`, `BotonSonido`,
+  `NavAdmin` y `estilos.ts`. Las reglas para usarlos están en `CLAUDE.md`.
+  Hay un token nuevo, `--exito`.
+- **Verificado**: 27 comprobaciones en Chrome sin ventana, a 390 px y en
+  escritorio: doble toque, spinner, avisos y sonidos, diálogo, bloqueo por
+  ventas, silenciar, navegación y sin scroll horizontal. Después del
+  deploy: el inicio muestra las 50 gorras, `/admin` sin sesión lleva al
+  login y en la base no quedaron restos de la prueba.
 
 ### v2.5.0 — Columnas internas cerradas a la API pública (2026-11-14)
 Tarea 001 (prioridad 1, seguridad). Commits `250e985` (Cowork: roles y
