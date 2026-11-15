@@ -67,6 +67,21 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
     `<Avisos />` va una sola vez en el layout del panel.
   - Clases de botón en `estilos.ts` (`btnPrimario`, `btnSecundario`,
     `btnBorrarIcono`, `btnIcono`), todas con `active:scale-95`.
+  - `MiniaturaProducto` — foto cuadrada de la gorra en los listados (o
+    ícono de gorra si no tiene). La portada sale de `primeraFoto()`
+    (`src/lib/fotos.ts`).
+  - `Interruptor` — el switch. `SwitchVisible` lo usa en el listado
+    (optimista, llama a `cambiarVisible`) y `CampoVisible` en el
+    formulario de producto. Una gorra con precio de venta 0 no se publica
+    (`MENSAJE_SIN_PRECIO`).
+  - `Buscador` + `FiltrosRapidos` — búsqueda sin tildes
+    (`textoBuscable` / `coincide` de `src/lib/busqueda.ts`) y chips con
+    contador.
+- Los listados con interacción se separan en dos: la página (server
+  component) hace el select y arma filas planas; la lista (client
+  component, ej. `ListaProductos`) busca, filtra y dibuja. En el celular
+  las filas son tarjetas; en la compu, una grilla tipo tabla (los
+  bloques con `md:contents` se convierten en celdas).
 - El showroom **nunca** usa `select("*")` sobre `productos`: el rol anon
   solo puede leer ciertas columnas (ver "Permisos de tabla del rol anon"
   en `docs/SCHEMA.md`). Usá `SELECT_CATALOGO` de `src/lib/catalogo.ts` y

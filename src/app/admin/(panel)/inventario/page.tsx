@@ -1,18 +1,41 @@
 import { createClient } from "@/lib/supabase/server";
 import { Producto } from "@/lib/types";
 import { costoTotal, formatARS, precioSugerido } from "@/lib/pricing";
+import { primeraFoto } from "@/lib/fotos";
+import ListaInventario, { type FilaInventario } from "@/components/admin/ListaInventario";
 
 export const revalidate = 0;
 
+type ProductoConsulta = Producto & {
+  fotos_producto: { path: string; orden: number }[] | null;
+  categorias: { nombre: string }[] | null;
+};
+
 export default async function InventarioPage() {
   const supabase = await createClient();
-  const { data } = await supabase.from("productos").select("*").order("nombre");
-  const productos = (data ?? []) as Producto[];
+  const { data, error } = await supabase
+    .from("productos")
+    .select("*, fotos_producto(path, orden), categorias(nombre)")
+    .order("nombre")
+    .returns<ProductoConsulta[]>();
 
-  const valorInventario = productos.reduce(
-    (acc, p) => acc + costoTotal(p) * p.cantidad,
-    0
-  );
+  // Los costos se calculan acá: a la lista solo le llegan los números.
+  const productos: FilaInventario[] = (data ?? []).map((p) => {
+    const costo = costoTotal(p);
+    return {
+      id: p.id,
+      nombre: p.nombre,
+      ref_interna: p.ref_interna,
+      cantidad: p.cantidad,
+      costo,
+      sugerido: precioSugerido(p),
+      valor: costo * p.cantidad,
+      foto: primeraFoto(p.fotos_producto)?.path ?? null,
+      categorias: (p.categorias ?? []).map((c) => c.nombre),
+    };
+  });
+
+  const valorInventario = productos.reduce((acc, p) => acc + p.valor, 0);
 
   return (
     <div>
@@ -23,39 +46,13 @@ export default async function InventarioPage() {
         </p>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl ring-1 ring-border">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-card text-muted">
-            <tr>
-              <th className="px-4 py-2">Producto</th>
-              <th className="px-4 py-2">Stock</th>
-              <th className="px-4 py-2">Costo unitario</th>
-              <th className="px-4 py-2">Precio sugerido</th>
-              <th className="px-4 py-2">Valor stock</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productos.map((p) => (
-              <tr key={p.id} className="border-t border-border bg-card">
-                <td className="px-4 py-2 text-foreground">{p.nombre}</td>
-                <td className={`px-4 py-2 ${p.cantidad <= 2 ? "font-semibold text-accent" : ""}`}>
-                  {p.cantidad}
-                </td>
-                <td className="px-4 py-2">{formatARS(costoTotal(p))}</td>
-                <td className="px-4 py-2 text-accent">{formatARS(precioSugerido(p))}</td>
-                <td className="px-4 py-2">{formatARS(costoTotal(p) * p.cantidad)}</td>
-              </tr>
-            ))}
-            {productos.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted">
-                  No hay productos cargados.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {error ? (
+        <p role="alert" className="mt-4 rounded-2xl bg-card px-4 py-6 text-sm text-accent ring-1 ring-border">
+          No se pudo cargar el inventario. Recargá la página en un rato.
+        </p>
+      ) : (
+        <ListaInventario productos={productos} />
+      )}
     </div>
   );
 }

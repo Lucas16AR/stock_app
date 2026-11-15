@@ -46,7 +46,7 @@ export default async function EditarProductoPage(
         ) : (
           <span
             aria-disabled="true"
-            title="Está oculto: destildaste «Visible al público»"
+            title="Está oculta: el interruptor «Visible en la tienda» está apagado"
             className={`${btnSecundario} cursor-not-allowed opacity-60 active:scale-100`}
           >
             <EyeIcon className="h-4 w-4" />

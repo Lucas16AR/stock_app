@@ -9,6 +9,7 @@ import FotosInput from "./FotosInput";
 import FormAccion from "./FormAccion";
 import BotonEnviar from "./BotonEnviar";
 import BotonBorrar from "./BotonBorrar";
+import CampoVisible from "./CampoVisible";
 import { btnPrimario } from "./estilos";
 
 export default function ProductForm({
@@ -115,14 +116,7 @@ export default function ProductForm({
         </div>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-muted">
-        <input
-          type="checkbox"
-          name="visible_publico"
-          defaultChecked={producto?.visible_publico ?? true}
-        />
-        Visible en el showroom público
-      </label>
+      <CampoVisible inicial={producto?.visible_publico ?? true} />
 
       {producto && producto.fotos_producto && producto.fotos_producto.length > 0 && (
         <div>

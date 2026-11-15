@@ -3,7 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { MAX_FOTOS_POR_PRODUCTO } from "@/lib/fotos";
-import { exito, fallo, mensajeError, motivoNoBorrarProducto, plural, type Resultado } from "@/lib/acciones";
+import {
+  exito,
+  fallo,
+  mensajeError,
+  motivoNoBorrarProducto,
+  plural,
+  MENSAJE_SIN_PRECIO,
+  type Resultado,
+} from "@/lib/acciones";
 
 // Todas las acciones devuelven Resultado ({ ok, mensaje } o { ok, error })
 // en vez de ignorar el error de Supabase. El cliente (FormAccion /
@@ -169,6 +177,7 @@ export async function crearProducto(formData: FormData): Promise<Resultado> {
   const campos = leerProducto(formData);
   const categoriaIds = formData.getAll("categorias").map(Number);
   if (!campos.nombre) return fallo("El producto necesita un nombre.");
+  if (campos.visible_publico && !(campos.precio_venta > 0)) return fallo(`${MENSAJE_SIN_PRECIO} O dejala oculta.`);
 
   const { data: producto, error } = await supabase.from("productos").insert(campos).select("id").single();
   if (error || !producto) return fallo(mensajeError(error, "guardar el producto"));
@@ -195,6 +204,7 @@ export async function actualizarProducto(id: number, formData: FormData): Promis
   const campos = leerProducto(formData);
   const categoriaIds = formData.getAll("categorias").map(Number);
   if (!campos.nombre) return fallo("El producto necesita un nombre.");
+  if (campos.visible_publico && !(campos.precio_venta > 0)) return fallo(`${MENSAJE_SIN_PRECIO} O dejala oculta.`);
 
   const { data, error } = await supabase.from("productos").update(campos).eq("id", id).select("id");
   if (error) return fallo(mensajeError(error, "guardar el producto"));
@@ -218,6 +228,31 @@ export async function actualizarProducto(id: number, formData: FormData): Promis
   revalidatePath(`/admin/productos/${id}`);
   revalidatePath("/");
   return exito(`Producto «${campos.nombre}» guardado${notaFotos(fallidas)}`, "/admin/productos");
+}
+
+// Interruptor "Visible" del listado: publica u oculta sin pasar por el
+// formulario. Para publicar exige precio de venta > 0; la condición va en
+// el mismo UPDATE, así no hay carrera entre leer el precio y publicar.
+export async function cambiarVisible(id: number, visible: boolean): Promise<Resultado> {
+  if (!Number.isInteger(id) || typeof visible !== "boolean") return fallo("Pedido inválido. Recargá la página.");
+  const supabase = await createClient();
+
+  let consulta = supabase.from("productos").update({ visible_publico: visible }).eq("id", id);
+  if (visible) consulta = consulta.gt("precio_venta", 0);
+  const { data, error } = await consulta.select("id");
+  if (error) return fallo(mensajeError(error, visible ? "publicar la gorra" : "ocultar la gorra"));
+
+  if (!data?.length) {
+    // No se actualizó nada: o no existe, o (al publicar) no tiene precio.
+    const { data: existe } = await supabase.from("productos").select("id").eq("id", id).maybeSingle();
+    return fallo(existe ? MENSAJE_SIN_PRECIO : "Esa gorra ya no existe. Recargá la página.");
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/producto/${id}`);
+  revalidatePath("/admin/productos");
+  revalidatePath(`/admin/productos/${id}`);
+  return exito(visible ? "Publicada en la tienda" : "Oculta de la tienda");
 }
 
 export async function eliminarProducto(id: number): Promise<Resultado> {

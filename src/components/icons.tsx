@@ -95,3 +95,23 @@ export function SpeakerOffIcon({ className }: { className?: string }) {
     </IconoTrazo>
   );
 }
+
+// Gorra de perfil: lo que se muestra cuando una gorra no tiene foto.
+export function CapIcon({ className }: { className?: string }) {
+  return (
+    <IconoTrazo className={className}>
+      <path d="M3 15a9 9 0 0 1 18 0" />
+      <path d="M3 15h13c2.5 0 4.5.6 5 1.5-.6.9-2.5 1.5-5 1.5H5a2 2 0 0 1-2-2v-1Z" />
+      <path d="M12 6V4.5" />
+    </IconoTrazo>
+  );
+}
+
+export function SearchIcon({ className }: { className?: string }) {
+  return (
+    <IconoTrazo className={className}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </IconoTrazo>
+  );
+}

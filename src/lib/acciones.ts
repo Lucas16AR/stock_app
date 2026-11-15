@@ -43,5 +43,9 @@ export function plural(n: number, singular: string, pluralForma = `${singular}s`
 // no ofrece borrar.
 export function motivoNoBorrarProducto(ventas?: number) {
   const cuantas = ventas ? plural(ventas, "venta registrada", "ventas registradas") : "ventas registradas";
-  return `Tiene ${cuantas} y borrarlo dejaría esas ventas sin producto. Si no querés que se vea en la tienda, ocultalo: editalo y destildá «Visible al público».`;
+  return `Tiene ${cuantas} y borrarlo dejaría esas ventas sin producto. Si no querés que se vea en la tienda, ocultalo: apagá su interruptor «Visible» en el listado.`;
 }
+
+// Una gorra con precio de venta 0 no se publica (se vería "$ 0" en la
+// tienda). Lo usan el interruptor del listado y las acciones.
+export const MENSAJE_SIN_PRECIO = "Cargale un precio de venta antes de publicarla.";

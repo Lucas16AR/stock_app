@@ -1,24 +1,50 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Producto } from "@/lib/types";
-import { formatARS } from "@/lib/pricing";
-import { motivoNoBorrarProducto, plural } from "@/lib/acciones";
-import BotonBorrar from "@/components/admin/BotonBorrar";
-import { btnPrimario, btnSecundario } from "@/components/admin/estilos";
-import { eliminarProducto } from "../actions";
+import { primeraFoto } from "@/lib/fotos";
+import ListaProductos, { type FilaProducto } from "@/components/admin/ListaProductos";
+import { btnPrimario } from "@/components/admin/estilos";
 
 export const revalidate = 0;
 
-type ProductoListado = Producto & { ventas: { count: number }[] };
+type ProductoConsulta = {
+  id: number;
+  nombre: string;
+  ref_interna: string | null;
+  cantidad: number;
+  precio_venta: number;
+  visible_publico: boolean;
+  lote_id: number | null;
+  fotos_producto: { path: string; orden: number }[] | null;
+  categorias: { nombre: string }[] | null;
+  ventas: { count: number }[] | null;
+};
 
+// Parte de datos: hace el select y le pasa a la lista (cliente) solo lo
+// que muestra. El buscador, los filtros y el interruptor viven en
+// ListaProductos.
 export default async function ProductosPage() {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("productos")
-    .select("*, fotos_producto(id), categorias(id, nombre), ventas(count)")
-    .order("fecha_creacion", { ascending: false });
+    .select(
+      "id, nombre, ref_interna, cantidad, precio_venta, visible_publico, lote_id, fotos_producto(path, orden), categorias(nombre), ventas(count)"
+    )
+    .order("fecha_creacion", { ascending: false })
+    .returns<ProductoConsulta[]>();
 
-  const productos = (data ?? []) as ProductoListado[];
+  const productos: FilaProducto[] = (data ?? []).map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    ref_interna: p.ref_interna,
+    cantidad: p.cantidad,
+    precio_venta: Number(p.precio_venta),
+    visible_publico: p.visible_publico,
+    lote_id: p.lote_id,
+    foto: primeraFoto(p.fotos_producto)?.path ?? null,
+    categorias: (p.categorias ?? []).map((c) => c.nombre),
+    fotos: p.fotos_producto?.length ?? 0,
+    ventas: p.ventas?.[0]?.count ?? 0,
+  }));
 
   return (
     <div>
@@ -29,59 +55,13 @@ export default async function ProductosPage() {
         </Link>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl ring-1 ring-border">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-card text-muted">
-            <tr>
-              <th className="px-4 py-2">Nombre</th>
-              <th className="px-4 py-2">Stock</th>
-              <th className="px-4 py-2">Precio de venta</th>
-              <th className="px-4 py-2">Visible</th>
-              <th className="px-4 py-2">Categorías</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {productos.map((p) => {
-              const ventas = p.ventas?.[0]?.count ?? 0;
-              const fotos = p.fotos_producto?.length ?? 0;
-              return (
-                <tr key={p.id} className="border-t border-border bg-card">
-                  <td className="px-4 py-2 text-foreground">{p.nombre}</td>
-                  <td className="px-4 py-2">{p.cantidad}</td>
-                  <td className="px-4 py-2 text-accent">{formatARS(p.precio_venta)}</td>
-                  <td className="px-4 py-2">{p.visible_publico ? "Sí" : "No"}</td>
-                  <td className="px-4 py-2 text-muted">
-                    {p.categorias?.map((c) => c.nombre).join(", ") || "-"}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    {/* Borrar va aparte, a la derecha y con espacio, para no tocarlo por Editar. */}
-                    <div className="flex items-center justify-end gap-4">
-                      <Link href={`/admin/productos/${p.id}`} className={btnSecundario}>
-                        Editar
-                      </Link>
-                      <BotonBorrar
-                        accion={eliminarProducto.bind(null, p.id)}
-                        etiqueta={`Borrar «${p.nombre}»`}
-                        titulo={`¿Borrar «${p.nombre}»?`}
-                        detalle={`Se borra el producto${fotos > 0 ? ` y sus ${plural(fotos, "foto")}` : ""}. No se puede deshacer.`}
-                        bloqueo={ventas > 0 ? motivoNoBorrarProducto(ventas) : undefined}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {productos.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                  Todavía no cargaste productos.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {error ? (
+        <p role="alert" className="mt-4 rounded-2xl bg-card px-4 py-6 text-sm text-accent ring-1 ring-border">
+          No se pudieron cargar los productos. Recargá la página en un rato.
+        </p>
+      ) : (
+        <ListaProductos productos={productos} />
+      )}
     </div>
   );
 }
