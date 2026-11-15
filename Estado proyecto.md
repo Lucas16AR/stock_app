@@ -12,7 +12,7 @@ el detalle de cada cambio. **Actualizado: 2026-11-15.**
 ## Estado actual
 
 - **Producción**: https://stock-app-six-woad.vercel.app — sana, versión
-  **v2.6.0** (código en `3a06fd3`).
+  **v2.7.0** (código en `c31b418`).
 - **Git**: `master` local = `origin/master`, sin ramas de tarea
   abiertas. Único deploy: Vercel (proyecto `stock-app`). Cada push a
   `master` redeploya solo.
@@ -30,8 +30,9 @@ el detalle de cada cambio. **Actualizado: 2026-11-15.**
    con varias fotos del celular (tiene que aparecer "N fotos listas ·
    X MB" bajo el campo) y borrar una con el ✕ al editar (tiene que
    desaparecer solo esa foto). No se pudo probar sin el login.
-2. **Tareas aprobadas, en este orden: 004 → 005 → 003** (detalle en
-   `tareas/`). Cada una arranca cuando Capi la pide.
+2. **Tareas aprobadas, en este orden: 005 → 003** (detalle en
+   `tareas/`). Cada una arranca cuando Capi la pide. La 005 trae
+   migración. Las dos pueden usar `MiniaturaProducto` de la 004.
 3. **Posible tarea (a proponer por Cowork)** — permisos por defecto de
    las tablas nuevas: Supabase le sigue dando todos los permisos a anon
    en cada tabla que se cree. Hasta resolverlo, revisar los permisos en
@@ -83,6 +84,52 @@ Las versiones de la app nueva arrancan en 2.0 (la app vieja en Flask
 llegó a V1.1.0). Tags de git: `first_version` y `v1.0` son de la app
 Flask vieja; `v2.0.0` marca el arranque de la app nueva (`b7c5ad3`). Las
 versiones 2.1.0 en adelante no tienen tag; cada una lista sus commits.
+
+### v2.7.0 — Productos e inventario con foto, visible con un toque y buscador (2026-11-15)
+Tarea 004. Commits `0e9d988` y `c31b418` (Claude Code). Sin cambios de
+base ni del showroom público. Revisada por Cowork y probada por Capi en
+la vista previa antes del merge. Deploy a producción el 2026-11-15.
+
+- **Foto en los listados**: Productos e Inventario muestran la foto de
+  portada de cada gorra (`MiniaturaProducto`; si no tiene foto, un ícono
+  de gorra) y, debajo del nombre, la referencia interna. Así se
+  distinguen las gorras que se llaman igual. En el celular cada gorra es
+  una tarjeta, sin scroll de costado; en la compu, una tabla. Tocar la
+  foto o el nombre abre la edición. En Inventario abre la fila entera.
+- **Visible con un toque**: un interruptor en el listado publica u
+  oculta la gorra sin entrar a editarla. Cambia al instante; si falla,
+  vuelve a su lugar con el aviso de error. Avisa "Publicada en la
+  tienda" / "Oculta de la tienda", con sonido. El mismo interruptor
+  reemplaza al checkbox del formulario.
+- **Sin precio no se publica**: una gorra con precio de venta 0 no se
+  puede publicar. Lo frenan el interruptor, la acción `cambiarVisible`
+  (la condición va en el mismo UPDATE) y el formulario al guardar.
+- **Buscador y filtros** en Productos:
+  - Busca por nombre, categoría o ref. interna, sin importar tildes.
+  - Filtros rápidos con contador: Todas, Publicadas, Ocultas, Sin
+    precio, Vendidas y Sin lote.
+  - Contador "Mostrando N de M".
+  - Inventario tiene el mismo buscador.
+- **Inventario**: las vendidas se ven atenuadas, con la etiqueta
+  "Vendida". Se sacó el rojo de "stock bajo" por decisión de Capi: casi
+  todas son piezas únicas, así que el stock 1 es lo normal y marcaba
+  casi todo.
+- **Por dentro**: cada listado se divide en dos. La página (server) hace
+  el select y arma filas planas; la lista (client) busca, filtra y
+  dibuja. Hay una sola fila para el celular y la compu (`md:contents`).
+  Componentes nuevos: `MiniaturaProducto`, `Interruptor`,
+  `SwitchVisible`, `CampoVisible`, `Buscador`, `FiltrosRapidos`,
+  `ListaProductos` y `ListaInventario`. También se sumaron
+  `src/lib/busqueda.ts` y `primeraFoto()`. Todo quedó documentado en
+  `CLAUDE.md`.
+- **Verificado**:
+  - 42 comprobaciones en Chrome sin ventana, a 390 px y 1280 px, en
+    claro y oscuro: fotos, tarjetas, búsquedas, filtros, la guarda de
+    precio sin pedido al servidor, el switch optimista que vuelve a su
+    lugar si la base rechaza, y el formulario.
+  - Prueba de Capi en la vista previa.
+  - Después del deploy: el inicio muestra las 50 gorras, `/admin` sin
+    sesión lleva al login y la base quedó con las 50 visibles.
 
 ### v2.6.0 — Panel que responde: botones, confirmaciones y avisos con sonido (2026-11-14)
 Tarea 002. Commit `3a06fd3` (Claude Code). Sin cambios de base ni del
