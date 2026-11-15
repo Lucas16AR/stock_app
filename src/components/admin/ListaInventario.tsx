@@ -19,9 +19,6 @@ export type FilaInventario = {
   categorias: string[];
 };
 
-// Con 1 o 2 unidades se marca en rojo; con 0 está vendida.
-const STOCK_BAJO = 2;
-
 const GRILLA =
   "md:grid md:grid-cols-[4rem_minmax(0,1fr)_5rem_8rem_8rem_8rem] md:items-center md:gap-4";
 
@@ -70,7 +67,6 @@ export default function ListaInventario({ productos }: { productos: FilaInventar
 
 function FilaListaInventario({ p }: { p: FilaInventario }) {
   const vendida = p.cantidad === 0;
-  const bajo = !vendida && p.cantidad <= STOCK_BAJO;
 
   return (
     <li className="border-t border-border first:border-t-0 md:first:border-t">
@@ -90,7 +86,7 @@ function FilaListaInventario({ p }: { p: FilaInventario }) {
           </div>
           {/* En el celular: stock a la derecha del nombre; costo y sugerido abajo. */}
           <span className="hidden text-sm md:block">
-            <Stock cantidad={p.cantidad} vendida={vendida} bajo={bajo} />
+            <Stock cantidad={p.cantidad} vendida={vendida} />
           </span>
           <div className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted md:contents md:text-sm md:text-foreground">
             <span>
@@ -109,14 +105,16 @@ function FilaListaInventario({ p }: { p: FilaInventario }) {
         </div>
 
         <span className="shrink-0 text-right text-sm md:hidden">
-          <Stock cantidad={p.cantidad} vendida={vendida} bajo={bajo} />
+          <Stock cantidad={p.cantidad} vendida={vendida} />
         </span>
       </Link>
     </li>
   );
 }
 
-function Stock({ cantidad, vendida, bajo }: { cantidad: number; vendida: boolean; bajo: boolean }) {
+// Sin rojo de "stock bajo": casi todas son piezas únicas (stock 1 es lo
+// normal). Solo se marca la vendida (stock 0).
+function Stock({ cantidad, vendida }: { cantidad: number; vendida: boolean }) {
   if (vendida) {
     return (
       <span className="rounded-full border border-accent px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">
@@ -125,7 +123,7 @@ function Stock({ cantidad, vendida, bajo }: { cantidad: number; vendida: boolean
     );
   }
   return (
-    <span className={bajo ? "font-semibold text-accent" : "text-foreground"}>
+    <span className="text-foreground">
       <span className="md:hidden">Stock </span>
       {cantidad}
     </span>
