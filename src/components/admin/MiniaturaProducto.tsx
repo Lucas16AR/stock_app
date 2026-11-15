@@ -10,19 +10,25 @@ export default function MiniaturaProducto({
   path,
   vendida = false,
   className = "h-14 w-14 md:h-16 md:w-16",
+  sizes = "64px",
+  marco = true,
 }: {
   path?: string | null;
   vendida?: boolean;
   className?: string;
+  // Ancho con que se muestra (para que next/image elija el tamaño).
+  sizes?: string;
+  // Borde redondeado con línea; sin marco cuando va dentro de una tarjeta.
+  marco?: boolean;
 }) {
   return (
-    <div className={`relative shrink-0 overflow-hidden rounded-lg bg-hover ring-1 ring-border ${className}`}>
+    <div className={`relative shrink-0 overflow-hidden bg-hover ${marco ? "rounded-lg ring-1 ring-border" : ""} ${className}`}>
       {path ? (
         <Image
           src={fotoUrl(SUPABASE_URL, path)}
           alt=""
           fill
-          sizes="64px"
+          sizes={sizes}
           className={`object-cover ${vendida ? "grayscale" : ""}`}
         />
       ) : (

@@ -12,6 +12,8 @@ import {
   MENSAJE_SIN_PRECIO,
   type Resultado,
 } from "@/lib/acciones";
+import { esDiaValido, fechaVenta, formatFechaCorta, hoyAR } from "@/lib/fechas";
+import { mensajeErrorVenta } from "@/lib/ventas";
 
 // Todas las acciones devuelven Resultado ({ ok, mensaje } o { ok, error })
 // en vez de ignorar el error de Supabase. El cliente (FormAccion /
@@ -299,45 +301,66 @@ export async function eliminarFoto(fotoId: number, productoId: number): Promise<
 }
 
 // ---------- Ventas ----------
-export async function registrarVenta(formData: FormData): Promise<Resultado> {
-  const supabase = await createClient();
+// Las ventas pasan por las funciones de la base (migración 005), que
+// validan, registran y tocan el stock en una sola transacción.
 
-  const producto_id = Number(formData.get("producto_id"));
-  const cantidad = Number(formData.get("cantidad") || 0);
-  const precio_venta = Number(formData.get("precio_venta") || 0);
-
-  if (!producto_id) return fallo("Elegí qué gorra se vendió.");
-  if (!Number.isInteger(cantidad) || cantidad <= 0) return fallo("La cantidad tiene que ser 1 o más.");
-
-  const { data: producto, error: prodError } = await supabase
-    .from("productos")
-    .select("nombre, cantidad")
-    .eq("id", producto_id)
-    .maybeSingle();
-  if (prodError) return fallo(mensajeError(prodError, "registrar la venta"));
-  if (!producto) return fallo("Esa gorra ya no existe. Recargá la página.");
-  if (cantidad > producto.cantidad) {
-    return fallo(`No hay suficiente stock de «${producto.nombre}». Disponible: ${producto.cantidad}.`);
-  }
-
-  const { error: ventaError } = await supabase.from("ventas").insert({ producto_id, cantidad, precio_venta });
-  if (ventaError) return fallo(mensajeError(ventaError, "registrar la venta"));
-
-  const { error: stockError } = await supabase
-    .from("productos")
-    .update({ cantidad: producto.cantidad - cantidad })
-    .eq("id", producto_id);
-
+function revalidarVentas(productoId: number) {
   revalidatePath("/admin/ventas");
   revalidatePath("/admin/productos");
+  revalidatePath(`/admin/productos/${productoId}`);
   revalidatePath("/admin/inventario");
   revalidatePath("/admin");
   revalidatePath("/");
+  revalidatePath(`/producto/${productoId}`);
+}
 
-  if (stockError) {
-    return fallo(
-      `La venta quedó registrada, pero no se pudo descontar el stock de «${producto.nombre}». Corregí el stock a mano: ${mensajeError(stockError, "actualizarlo")}`
-    );
+export async function registrarVenta(formData: FormData): Promise<Resultado> {
+  const producto_id = Number(formData.get("producto_id"));
+  const cantidad = Number(formData.get("cantidad") || 0);
+  const precio = Number(formData.get("precio_venta"));
+  const dia = String(formData.get("fecha") || "");
+
+  if (!Number.isInteger(producto_id) || producto_id <= 0) return fallo("Elegí qué gorra se vendió.");
+  if (!Number.isInteger(cantidad) || cantidad <= 0) return fallo("La cantidad tiene que ser 1 o más.");
+  if (formData.get("precio_venta") === "" || !Number.isFinite(precio) || precio < 0) {
+    return fallo("Cargá el precio de venta.");
   }
-  return exito(`Venta registrada: ${cantidad} × ${producto.nombre}`);
+  if (!esDiaValido(dia)) return fallo("Elegí la fecha de la venta.");
+  const hoy = hoyAR();
+  if (dia > hoy) return fallo("La fecha de la venta no puede ser posterior a hoy.");
+
+  const supabase = await createClient();
+  const fecha = fechaVenta(dia, hoy);
+  const { error } = await supabase.rpc("registrar_venta", {
+    p_producto_id: producto_id,
+    p_cantidad: cantidad,
+    p_precio: precio,
+    ...(fecha ? { p_fecha: fecha } : {}),
+  });
+  if (error) return fallo(mensajeErrorVenta(error, "registrar la venta"));
+
+  const { data: producto } = await supabase.from("productos").select("nombre").eq("id", producto_id).maybeSingle();
+  revalidarVentas(producto_id);
+  const quien = producto?.nombre ?? "la gorra";
+  return exito(`Venta registrada: ${cantidad > 1 ? `${cantidad} × ` : ""}${quien}${fecha ? ` (${formatFechaCorta(fecha)})` : ""}`);
+}
+
+export async function anularVenta(ventaId: number): Promise<Resultado> {
+  if (!Number.isInteger(ventaId)) return fallo("Pedido inválido. Recargá la página.");
+  const supabase = await createClient();
+
+  const { data: venta, error: leerError } = await supabase
+    .from("ventas")
+    .select("producto_id, cantidad, productos(nombre)")
+    .eq("id", ventaId)
+    .maybeSingle<{ producto_id: number; cantidad: number; productos: { nombre: string } | null }>();
+  if (leerError) return fallo(mensajeError(leerError, "anular la venta"));
+  if (!venta) return fallo(mensajeErrorVenta({ message: "venta_no_encontrada" }, "anular la venta"));
+
+  const { error } = await supabase.rpc("anular_venta", { p_venta_id: ventaId });
+  if (error) return fallo(mensajeErrorVenta(error, "anular la venta"));
+
+  revalidarVentas(venta.producto_id);
+  const nombre = venta.productos?.nombre ?? "La gorra";
+  return exito(`Venta anulada · ${nombre} volvió al stock${venta.cantidad > 1 ? ` (+${venta.cantidad})` : ""}`);
 }

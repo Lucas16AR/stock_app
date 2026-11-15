@@ -115,3 +115,13 @@ export function SearchIcon({ className }: { className?: string }) {
     </IconoTrazo>
   );
 }
+
+// Flecha que vuelve: anular una venta.
+export function UndoIcon({ className }: { className?: string }) {
+  return (
+    <IconoTrazo className={className}>
+      <path d="M9 14 4 9l5-5" />
+      <path d="M4 9h11a5 5 0 0 1 0 10h-3" />
+    </IconoTrazo>
+  );
+}

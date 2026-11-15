@@ -24,8 +24,30 @@ Proyecto Supabase: **stockAPP** (región `sa-east-1`, org `Lucas16AR's Org`).
   producto (`MAX_FOTOS_POR_PRODUCTO` en `src/lib/fotos.ts`, validado en la
   server action, no en la base).
 - **`ventas`** — `id`, `producto_id` (FK, `RESTRICT`), `cantidad`,
-  `precio_venta`, `fecha`. Al insertar una venta, la server action
-  descuenta `productos.cantidad` en el mismo flujo (no hay trigger).
+  `precio_venta`, `fecha` (timestamptz). Desde la tarea 005 **no se
+  escribe directo**: registrar y anular pasan por las funciones de abajo,
+  que tocan el stock en la misma transacción (no hay trigger).
+
+## Funciones (tarea 005)
+
+`supabase/migrations/20261115000001_005_funciones_ventas.sql`. Las dos
+son `SECURITY INVOKER` (corren con el RLS del admin logueado), con
+`EXECUTE` solo para `authenticated`: Supabase les da `EXECUTE` a `anon`
+por defecto en toda función nueva, así que la migración se lo saca.
+
+- **`registrar_venta(p_producto_id, p_cantidad, p_precio, p_fecha default
+  now())`** → `bigint` (id de la venta). Bloquea la fila del producto
+  (`FOR UPDATE`), valida, inserta la venta y descuenta el stock.
+  Errores: `cantidad_invalida`, `precio_invalido`, `fecha_futura` (se
+  mide en días de Argentina), `producto_no_encontrado` y
+  `stock_insuficiente:<stock>`.
+- **`anular_venta(p_venta_id)`** → borra la venta y devuelve la cantidad
+  al stock. Error: `venta_no_encontrada`.
+
+La server action manda `p_fecha` solo si la venta no es de hoy: en ese
+caso, el mediodía de ese día en Argentina (`fechaVenta()` en
+`src/lib/fechas.ts`). Los errores se traducen en `src/lib/ventas.ts`.
+Una función nueva necesita el mismo `revoke ... from public, anon`.
 
 ## Margen vs. precio de venta
 

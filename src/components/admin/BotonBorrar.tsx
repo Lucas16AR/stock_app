@@ -16,6 +16,9 @@ import { btnBorrarIcono } from "./estilos";
 // - `bloqueo`: si viene, no se ofrece borrar; el diálogo explica por qué y
 //   qué hacer en su lugar (ej. producto con ventas → ocultarlo).
 //
+// - `textoConfirmar` / `textoPendiente`: el botón del diálogo, por defecto
+//   "Borrar" / "Borrando…" (ej. "Anular venta" / "Anulando…").
+//
 // El foco arranca en "Cancelar" y Escape cierra sin borrar.
 export default function BotonBorrar({
   accion,
@@ -24,6 +27,8 @@ export default function BotonBorrar({
   bloqueo,
   etiqueta,
   className = btnBorrarIcono,
+  textoConfirmar = "Borrar",
+  textoPendiente = "Borrando…",
   children,
 }: {
   accion: () => Promise<Resultado>;
@@ -32,6 +37,8 @@ export default function BotonBorrar({
   bloqueo?: string;
   etiqueta: string;
   className?: string;
+  textoConfirmar?: string;
+  textoPendiente?: string;
   children?: React.ReactNode;
 }) {
   const dialogo = useRef<HTMLDialogElement>(null);
@@ -109,10 +116,10 @@ export default function BotonBorrar({
                 {pendiente ? (
                   <>
                     <Spinner />
-                    Borrando…
+                    {textoPendiente}
                   </>
                 ) : (
-                  "Borrar"
+                  textoConfirmar
                 )}
               </button>
             )}

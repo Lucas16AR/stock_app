@@ -62,7 +62,10 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
     corre (`textoPendiente`: "Guardando…", "Registrando…").
   - `BotonBorrar` — **toda acción destructiva** pasa por acá: diálogo de
     confirmación con `titulo`, `detalle` (consecuencias) o `bloqueo`
-    (cuando no se puede borrar y qué hacer en su lugar).
+    (cuando no se puede borrar y qué hacer en su lugar). Para acciones
+    que no son "borrar" se cambia el texto del botón con
+    `textoConfirmar` / `textoPendiente` (ej. "Anular venta" / "Anulando…")
+    y el ícono con `children`.
   - `avisar.exito / borrado / error` (`avisar.ts`) para avisos sueltos;
     `<Avisos />` va una sola vez en el layout del panel.
   - Clases de botón en `estilos.ts` (`btnPrimario`, `btnSecundario`,
@@ -77,6 +80,13 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
   - `Buscador` + `FiltrosRapidos` — búsqueda sin tildes
     (`textoBuscable` / `coincide` de `src/lib/busqueda.ts`) y chips con
     contador.
+- **Ventas**: nunca se insertan ni borran directo en la tabla. Se usan
+  las funciones `registrar_venta` / `anular_venta` con `supabase.rpc`,
+  que tocan el stock en la misma transacción (ver `docs/SCHEMA.md`). Sus
+  errores se traducen con `mensajeErrorVenta()` (`src/lib/ventas.ts`).
+- **Fechas del admin en hora argentina**: el servidor corre en UTC. Usá
+  `formatFecha()` / `hoyAR()` de `src/lib/fechas.ts`, nunca
+  `toLocaleDateString` sin `timeZone`.
 - Los listados con interacción se separan en dos: la página (server
   component) hace el select y arma filas planas; la lista (client
   component, ej. `ListaProductos`) busca, filtra y dibuja. En el celular

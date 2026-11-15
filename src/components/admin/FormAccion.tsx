@@ -18,11 +18,14 @@ export default function FormAccion({
   children,
   className,
   limpiarAlTerminar = false,
+  alTerminarBien,
 }: {
   accion: (formData: FormData) => Promise<Resultado>;
   children: React.ReactNode;
   className?: string;
   limpiarAlTerminar?: boolean;
+  // Para limpiar estado propio del formulario (ej. la gorra elegida en Ventas).
+  alTerminarBien?: () => void;
 }) {
   const router = useRouter();
   const [pendiente, startTransition] = useTransition();
@@ -43,6 +46,7 @@ export default function FormAccion({
         if (r.ok) {
           avisar.exito(r.mensaje);
           if (limpiarAlTerminar) form.reset();
+          alTerminarBien?.();
           if (r.redirigirA) router.push(r.redirigirA);
         } else {
           avisar.error(r.error);
