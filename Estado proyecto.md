@@ -2,7 +2,7 @@
 
 Archivo de traspaso entre sesiones (Claude Code local y Cowork). Arriba
 está el estado actual y lo pendiente; abajo, el historial por versión con
-el detalle de cada cambio. **Actualizado: 2026-11-15.**
+el detalle de cada cambio. **Actualizado: 2026-11-16.**
 
 > El repo de GitHub es **público**: no escribas acá emails, contraseñas
 > ni datos personales.
@@ -12,14 +12,16 @@ el detalle de cada cambio. **Actualizado: 2026-11-15.**
 ## Estado actual
 
 - **Producción**: https://stock-app-six-woad.vercel.app — sana, versión
-  **v2.7.0** (código en `c31b418`).
+  **v2.8.0** (código en `06c36fc`).
 - **Git**: `master` local = `origin/master`, sin ramas de tarea
   abiertas. Único deploy: Vercel (proyecto `stock-app`). Cada push a
   `master` redeploya solo.
-- **Base (Supabase `stockAPP`)**: activa. 50 productos visibles al
-  público (48 con stock + 2 vendidas). Todas las migraciones están
-  aplicadas: la de vendidas (v2.4.0) y las dos de la tarea 001 (v2.5.0).
-  El visitante solo lee las columnas públicas y no puede escribir nada.
+- **Base (Supabase `stockAPP`)**: activa. 50 productos, todos visibles y
+  con stock. Sin ventas registradas: Capi anuló a propósito las 2 ventas
+  del 12/11 (gorras 59 y 60) el 2026-11-16. Todas las migraciones están
+  aplicadas: la de vendidas (v2.4.0), las dos de la tarea 001 (v2.5.0) y
+  la de funciones de ventas (v2.8.0). El visitante solo lee las columnas
+  públicas y no puede escribir nada ni usar las funciones de ventas.
 - **Cron keepalive**: funcionando. Primera ejecución automática
   confirmada el 2026-11-11 a las 12:00 UTC en los logs de Supabase
   (`HEAD /rest/v1/categorias?select=id` → 200).
@@ -30,9 +32,9 @@ el detalle de cada cambio. **Actualizado: 2026-11-15.**
    con varias fotos del celular (tiene que aparecer "N fotos listas ·
    X MB" bajo el campo) y borrar una con el ✕ al editar (tiene que
    desaparecer solo esa foto). No se pudo probar sin el login.
-2. **Tareas aprobadas, en este orden: 005 → 003** (detalle en
-   `tareas/`). Cada una arranca cuando Capi la pide. La 005 trae
-   migración. Las dos pueden usar `MiniaturaProducto` de la 004.
+2. **Tarea aprobada: 003** (lotes; detalle en `tareas/`). Arranca
+   cuando Capi la pide. Puede usar `MiniaturaProducto` (v2.7.0) y
+   `formatFecha()` / `hoyAR()` de `src/lib/fechas.ts` (v2.8.0).
 3. **Posible tarea (a proponer por Cowork)** — permisos por defecto de
    las tablas nuevas: Supabase le sigue dando todos los permisos a anon
    en cada tabla que se cree. Hasta resolverlo, revisar los permisos en
@@ -40,8 +42,10 @@ el detalle de cada cambio. **Actualizado: 2026-11-15.**
 4. **Posible tarea (riesgo bajo)** — las fotos de productos ocultos
    siguen en el bucket público; sus URLs llevan un UUID. Quedó fuera de
    alcance de la 001.
-5. **Para la 003** (nota de la revisión de la 002): las fechas del admin
-   (`fechaCorta()` en lotes) todavía no fijan la zona horaria.
+5. **Para la 003** (nota de la revisión de la 002): las fechas de lotes
+   (`fechaCorta()`) y el selector de lote del formulario de producto
+   todavía usan `toLocaleDateString` sin zona horaria. Hay que pasarlos
+   a `formatFecha()`.
 
 ## Cómo trabajar en este repo (para las dos sesiones)
 
@@ -84,6 +88,58 @@ Las versiones de la app nueva arrancan en 2.0 (la app vieja en Flask
 llegó a V1.1.0). Tags de git: `first_version` y `v1.0` son de la app
 Flask vieja; `v2.0.0` marca el arranque de la app nueva (`b7c5ad3`). Las
 versiones 2.1.0 en adelante no tienen tag; cada una lista sus commits.
+
+### v2.8.0 — Ventas: selector con foto, fecha de venta y anular (2026-11-16)
+Tarea 005. Commit `06c36fc` (Claude Code), más la migración 005, que
+aplicó Cowork antes del deploy con el OK de Capi. Revisada por Cowork y
+probada por Capi en la vista previa. Deploy a producción el 2026-11-16.
+
+- **Migración `20261115000001_005_funciones_ventas.sql`** (aplicada por
+  Cowork el 2026-11-15 ~22:37 UTC, antes del deploy; es aditiva):
+  - Crea las funciones `registrar_venta` y `anular_venta`. Cada una
+    valida y toca el stock en una sola transacción, con la fila del
+    producto bloqueada. Antes eran tres pedidos sueltos: si fallaba uno
+    en el medio, la venta quedaba sin descontar stock o al revés.
+  - Son `SECURITY INVOKER` y solo `authenticated` puede ejecutarlas: se
+    le saca a `anon` el `EXECUTE` que Supabase da por defecto.
+  - Una venta "futura" se mide en días de Argentina.
+- **Selector visual**: buscador sin tildes y grilla de gorras con stock,
+  con foto, ref. interna, precio y stock (2 columnas en el celular).
+  La gorra elegida queda arriba, con "Cambiar", y precarga su precio.
+- **Fecha de la venta**: por defecto hoy en hora argentina, sin fechas
+  futuras. Si no es hoy, se guarda el mediodía de ese día (-03:00).
+- **Anular una venta**: con confirmación ("La gorra vuelve al stock…").
+  Borra la venta y devuelve el stock en una sola transacción.
+- **Historial**:
+  - Miniatura, nombre + ref., fecha en hora argentina, cantidad, precio
+    y total.
+  - Tarjetas en el celular.
+  - Total del mes actual arriba.
+- **Por dentro**:
+  - `src/lib/fechas.ts`: `formatFecha`, `hoyAR`, etc. Fechas del admin
+    en hora argentina: el servidor corre en UTC, así que una venta a las
+    23:00 se mostraba con el día siguiente.
+  - `src/lib/ventas.ts`: traduce los errores de las funciones ("No hay
+    stock suficiente: queda 1").
+  - `HistorialVentas` y `VentaForm`, rehechos.
+  - `BotonBorrar` acepta `textoConfirmar` / `textoPendiente`.
+  - Reglas nuevas en `CLAUDE.md`: las ventas solo pasan por las
+    funciones, y las fechas usan `src/lib/fechas.ts`. Las funciones
+    quedaron documentadas en `docs/SCHEMA.md`.
+- **Verificado**:
+  - Migración en PGlite: 29 comprobaciones, incluida la atomicidad
+    (si falla el descuento de stock, la venta no queda).
+  - Fechas: 11 comprobaciones (el caso de las 23:00).
+  - Interfaz en Chrome sin ventana: 35 comprobaciones.
+  - En producción (Cowork): permisos, `anon` → 42501, y una prueba de
+    punta a punta dentro de un bloque que se deshizo.
+  - Prueba de Capi en la vista previa.
+  - Después del deploy: el inicio muestra las 50 gorras y `/admin` sin
+    sesión lleva al login.
+- **Datos**: durante la prueba, Capi anuló también las 2 ventas reales
+  (gorras 59 y 60), a propósito: los logs muestran 4 anulaciones
+  confirmadas una por una. Las dos gorras volvieron a tener stock 1 y la
+  tabla `ventas` quedó vacía.
 
 ### v2.7.0 — Productos e inventario con foto, visible con un toque y buscador (2026-11-15)
 Tarea 004. Commits `0e9d988` y `c31b418` (Claude Code). Sin cambios de
