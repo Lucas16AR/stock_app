@@ -133,7 +133,7 @@ a producción el 2026-11-16.
     sesión lleva al login.
 - **Datos**: durante la prueba, el envío del lote #1 pasó de $ 20.500 a
   $ 21.000 desde el panel y se repartió: cada gorra tiene $ 420 de envío
-  (antes $ 410).
+  (antes $ 410). Capi confirmó que fue a propósito.
 
 ### v2.8.0 — Ventas: selector con foto, fecha de venta y anular (2026-11-16)
 Tarea 005. Commit `06c36fc` (Claude Code), más la migración 005, que
