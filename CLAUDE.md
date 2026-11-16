@@ -65,7 +65,11 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
     (cuando no se puede borrar y qué hacer en su lugar). Para acciones
     que no son "borrar" se cambia el texto del botón con
     `textoConfirmar` / `textoPendiente` (ej. "Anular venta" / "Anulando…")
-    y el ícono con `children`.
+    y el ícono con `children`; con `tipoAviso="exito"` suena como un
+    "listo" en vez de un borrado (ej. repartir el envío de un lote).
+  - `NoExiste` — aviso dentro del panel cuando algo ya no existe. Lo usan
+    los `not-found.tsx` del panel (lote, gorra y uno general), así un
+    `notFound()` no muestra el 404 genérico de Next.
   - `avisar.exito / borrado / error` (`avisar.ts`) para avisos sueltos;
     `<Avisos />` va una sola vez en el layout del panel.
   - Clases de botón en `estilos.ts` (`btnPrimario`, `btnSecundario`,
@@ -86,7 +90,13 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
   errores se traducen con `mensajeErrorVenta()` (`src/lib/ventas.ts`).
 - **Fechas del admin en hora argentina**: el servidor corre en UTC. Usá
   `formatFecha()` / `hoyAR()` de `src/lib/fechas.ts`, nunca
-  `toLocaleDateString` sin `timeZone`.
+  `toLocaleDateString` sin `timeZone`. Un día elegido en un formulario
+  (venta, lote) se guarda con `fechaParaGuardar()`: si es hoy, `now()`;
+  si no, el mediodía de ese día en Argentina.
+- **Lotes**: las gorras se asignan desde la edición del lote, de a muchas
+  (`asignarLote`). "Repartir envío" pone en cada gorra del lote el costo
+  de envío dividido por la cantidad, redondeado a pesos (`envioPorGorra`
+  en `src/lib/lotes.ts`).
 - Los listados con interacción se separan en dos: la página (server
   component) hace el select y arma filas planas; la lista (client
   component, ej. `ListaProductos`) busca, filtra y dibuja. En el celular

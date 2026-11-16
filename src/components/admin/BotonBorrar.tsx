@@ -29,6 +29,7 @@ export default function BotonBorrar({
   className = btnBorrarIcono,
   textoConfirmar = "Borrar",
   textoPendiente = "Borrando…",
+  tipoAviso = "borrado",
   children,
 }: {
   accion: () => Promise<Resultado>;
@@ -39,6 +40,9 @@ export default function BotonBorrar({
   className?: string;
   textoConfirmar?: string;
   textoPendiente?: string;
+  // Sonido al salir bien: "borrado" (tono que baja) o "exito" (para
+  // confirmaciones que no borran nada, como repartir el envío).
+  tipoAviso?: "borrado" | "exito";
   children?: React.ReactNode;
 }) {
   const dialogo = useRef<HTMLDialogElement>(null);
@@ -60,7 +64,7 @@ export default function BotonBorrar({
       try {
         const r = await accion();
         if (r.ok) {
-          avisar.borrado(r.mensaje);
+          avisar[tipoAviso](r.mensaje);
           dialogo.current?.close();
           if (r.redirigirA) router.push(r.redirigirA);
         } else {

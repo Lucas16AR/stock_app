@@ -14,6 +14,12 @@ export function formatFecha(fecha: string | Date) {
   });
 }
 
+// "AAAA-MM-DD" de una fecha guardada, en hora argentina (para el valor
+// inicial de un <input type="date">).
+export function diaAR(fecha: string | Date) {
+  return new Date(fecha).toLocaleDateString("en-CA", { timeZone: ZONA_AR });
+}
+
 // "12/11" (para textos cortos, como el diálogo de anular)
 export function formatFechaCorta(fecha: string | Date) {
   return new Date(fecha).toLocaleDateString("es-AR", { timeZone: ZONA_AR, day: "2-digit", month: "2-digit" });
@@ -35,11 +41,11 @@ export function nombreMesAR(ahora = new Date()) {
   return ahora.toLocaleDateString("es-AR", { timeZone: ZONA_AR, month: "long" });
 }
 
-// Fecha que se guarda para una venta elegida en el formulario: si es hoy,
-// null (la base usa now() y se mantiene el orden del día por hora); si es
-// otro día, el mediodía de ese día en Argentina (Argentina no tiene horario
-// de verano: siempre -03:00).
-export function fechaVenta(dia: string, hoy = hoyAR()) {
+// Fecha que se guarda para un día elegido en un formulario (venta, lote):
+// si es hoy, null (la base usa now() y se mantiene el orden del día por
+// hora); si es otro día, el mediodía de ese día en Argentina (Argentina no
+// tiene horario de verano: siempre -03:00).
+export function fechaParaGuardar(dia: string, hoy = hoyAR()) {
   return dia === hoy ? null : `${dia}T12:00:00-03:00`;
 }
 

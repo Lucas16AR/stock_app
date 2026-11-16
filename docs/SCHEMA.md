@@ -45,7 +45,7 @@ por defecto en toda función nueva, así que la migración se lo saca.
   al stock. Error: `venta_no_encontrada`.
 
 La server action manda `p_fecha` solo si la venta no es de hoy: en ese
-caso, el mediodía de ese día en Argentina (`fechaVenta()` en
+caso, el mediodía de ese día en Argentina (`fechaParaGuardar()` en
 `src/lib/fechas.ts`). Los errores se traducen en `src/lib/ventas.ts`.
 Una función nueva necesita el mismo `revoke ... from public, anon`.
 

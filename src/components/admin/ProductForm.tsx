@@ -1,5 +1,6 @@
 import { Categoria, Lote, Producto } from "@/lib/types";
 import { fotoUrl } from "@/lib/pricing";
+import { formatFecha } from "@/lib/fechas";
 import { SUPABASE_URL } from "@/lib/config";
 import { eliminarFoto } from "@/app/admin/(panel)/actions";
 import { MAX_FOTOS_POR_PRODUCTO } from "@/lib/fotos";
@@ -81,7 +82,8 @@ export default function ProductForm({
             <option value="">Sin lote</option>
             {lotes.map((l) => (
               <option key={l.id} value={l.id}>
-                Lote #{l.id} — {new Date(l.fecha).toLocaleDateString("es-AR")}
+                Lote #{l.id} — {formatFecha(l.fecha)}
+                {l.nota ? ` · ${l.nota}` : ""}
               </option>
             ))}
           </select>

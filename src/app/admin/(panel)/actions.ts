@@ -12,7 +12,9 @@ import {
   MENSAJE_SIN_PRECIO,
   type Resultado,
 } from "@/lib/acciones";
-import { esDiaValido, fechaVenta, formatFechaCorta, hoyAR } from "@/lib/fechas";
+import { esDiaValido, fechaParaGuardar, formatFechaCorta, hoyAR } from "@/lib/fechas";
+import { envioPorGorra, leerFechaLote } from "@/lib/lotes";
+import { formatARS } from "@/lib/pricing";
 import { mensajeErrorVenta } from "@/lib/ventas";
 
 // Todas las acciones devuelven Resultado ({ ok, mensaje } o { ok, error })
@@ -58,26 +60,117 @@ export async function eliminarCategoria(id: number): Promise<Resultado> {
 }
 
 // ---------- Lotes ----------
+
+function revalidarLote(id: number) {
+  revalidatePath("/admin/lotes");
+  revalidatePath(`/admin/lotes/${id}`);
+  revalidatePath("/admin/productos");
+  revalidatePath("/admin/inventario");
+}
+
 export async function crearLote(formData: FormData): Promise<Resultado> {
   const costo_envio = Number(formData.get("costo_envio") || 0);
   const nota = String(formData.get("nota") || "").trim() || null;
+  if (!Number.isFinite(costo_envio) || costo_envio < 0) return fallo("El costo de envío no puede ser negativo.");
+  const { fecha, error: errorFecha } = leerFechaLote(formData);
+  if (errorFecha) return fallo(errorFecha);
+
   const supabase = await createClient();
-  const { data, error } = await supabase.from("lotes").insert({ costo_envio, nota }).select("id").single();
+  const { data, error } = await supabase
+    .from("lotes")
+    .insert({ costo_envio, nota, ...(fecha ? { fecha } : {}) })
+    .select("id")
+    .single();
   if (error || !data) return fallo(mensajeError(error, "crear el lote"));
   revalidatePath("/admin/lotes");
-  return exito(`Lote #${data.id} creado`, "/admin/lotes");
+  // A la edición: ahí se le asignan las gorras.
+  return exito(`Lote #${data.id} creado`, `/admin/lotes/${data.id}`);
 }
 
 export async function actualizarLote(id: number, formData: FormData): Promise<Resultado> {
   const costo_envio = Number(formData.get("costo_envio") || 0);
   const nota = String(formData.get("nota") || "").trim() || null;
+  if (!Number.isFinite(costo_envio) || costo_envio < 0) return fallo("El costo de envío no puede ser negativo.");
+  const { fecha, error: errorFecha } = leerFechaLote(formData);
+  if (errorFecha) return fallo(errorFecha);
+
   const supabase = await createClient();
-  const { data, error } = await supabase.from("lotes").update({ costo_envio, nota }).eq("id", id).select("id");
+  const cambios = {
+    costo_envio,
+    nota,
+    // Hoy elegido al editar: la hora de ahora.
+    ...(fecha !== undefined ? { fecha: fecha ?? new Date().toISOString() } : {}),
+  };
+  const { data, error } = await supabase.from("lotes").update(cambios).eq("id", id).select("id");
   if (error) return fallo(mensajeError(error, "guardar el lote"));
   if (!data?.length) return fallo("Ese lote ya no existe. Recargá la página.");
-  revalidatePath("/admin/lotes");
-  revalidatePath(`/admin/lotes/${id}`);
-  return exito(`Lote #${id} guardado`, "/admin/lotes");
+  revalidarLote(id);
+  return exito(`Lote #${id} guardado`);
+}
+
+// Asigna varias gorras a un lote de una vez (las saca del lote en que
+// estuvieran).
+export async function asignarLote(loteId: number, productoIds: number[]): Promise<Resultado> {
+  if (!Number.isInteger(loteId) || !Array.isArray(productoIds)) return fallo("Pedido inválido. Recargá la página.");
+  const ids = [...new Set(productoIds)].filter((n) => Number.isInteger(n) && n > 0);
+  if (ids.length === 0) return fallo("Marcá al menos una gorra.");
+
+  const supabase = await createClient();
+  const { data: lote, error: loteError } = await supabase.from("lotes").select("id").eq("id", loteId).maybeSingle();
+  if (loteError) return fallo(mensajeError(loteError, "asignar las gorras"));
+  if (!lote) return fallo("Ese lote ya no existe. Recargá la página.");
+
+  const { data, error } = await supabase.from("productos").update({ lote_id: loteId }).in("id", ids).select("id");
+  if (error) return fallo(mensajeError(error, "asignar las gorras"));
+  if (!data?.length) return fallo("Esas gorras ya no existen. Recargá la página.");
+  revalidarLote(loteId);
+  return exito(`${plural(data.length, "gorra asignada", "gorras asignadas")} al lote #${loteId}`);
+}
+
+export async function quitarDelLote(loteId: number, productoId: number): Promise<Resultado> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("productos")
+    .update({ lote_id: null })
+    .eq("id", productoId)
+    .eq("lote_id", loteId)
+    .select("nombre");
+  if (error) return fallo(mensajeError(error, "sacar la gorra del lote"));
+  if (!data?.length) return fallo("Esa gorra ya no está en este lote. Recargá la página.");
+  revalidarLote(loteId);
+  return exito(`«${data[0].nombre}» quedó sin lote`);
+}
+
+// Pone costo_envio_unitario = costo de envío del lote / gorras del lote,
+// en todas ellas. El precio sugerido se recalcula solo; el precio de
+// venta no se toca.
+export async function repartirEnvio(loteId: number): Promise<Resultado> {
+  const supabase = await createClient();
+  const { data: lote, error: loteError } = await supabase
+    .from("lotes")
+    .select("costo_envio")
+    .eq("id", loteId)
+    .maybeSingle();
+  if (loteError) return fallo(mensajeError(loteError, "repartir el envío"));
+  if (!lote) return fallo("Ese lote ya no existe. Recargá la página.");
+
+  const { count, error: countError } = await supabase
+    .from("productos")
+    .select("id", { count: "exact", head: true })
+    .eq("lote_id", loteId);
+  if (countError) return fallo(mensajeError(countError, "repartir el envío"));
+  const n = count ?? 0;
+  if (n === 0) return fallo("El lote no tiene gorras para repartir el envío.");
+
+  const porGorra = envioPorGorra(Number(lote.costo_envio), n);
+  const { data, error } = await supabase
+    .from("productos")
+    .update({ costo_envio_unitario: porGorra })
+    .eq("lote_id", loteId)
+    .select("id");
+  if (error) return fallo(mensajeError(error, "repartir el envío"));
+  revalidarLote(loteId);
+  return exito(`Envío repartido: ${formatARS(porGorra)} por gorra en ${plural(data?.length ?? n, "gorra")}`);
 }
 
 export async function eliminarLote(id: number): Promise<Resultado> {
@@ -330,7 +423,7 @@ export async function registrarVenta(formData: FormData): Promise<Resultado> {
   if (dia > hoy) return fallo("La fecha de la venta no puede ser posterior a hoy.");
 
   const supabase = await createClient();
-  const fecha = fechaVenta(dia, hoy);
+  const fecha = fechaParaGuardar(dia, hoy);
   const { error } = await supabase.rpc("registrar_venta", {
     p_producto_id: producto_id,
     p_cantidad: cantidad,
