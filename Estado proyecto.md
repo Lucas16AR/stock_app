@@ -12,12 +12,13 @@ el detalle de cada cambio. **Actualizado: 2026-11-16.**
 ## Estado actual
 
 - **Producción**: https://stock-app-six-woad.vercel.app — sana, versión
-  **v2.8.0** (código en `06c36fc`).
+  **v2.9.0** (código en `ca899f9`).
 - **Git**: `master` local = `origin/master`, sin ramas de tarea
   abiertas. Único deploy: Vercel (proyecto `stock-app`). Cada push a
   `master` redeploya solo.
 - **Base (Supabase `stockAPP`)**: activa. 50 productos, todos visibles y
-  con stock. Sin ventas registradas: Capi anuló a propósito las 2 ventas
+  con stock, todos en el lote #1 (envío $ 21.000, repartido: $ 420 por
+  gorra desde el 2026-11-16). Sin ventas registradas: Capi anuló a propósito las 2 ventas
   del 12/11 (gorras 59 y 60) el 2026-11-16. Todas las migraciones están
   aplicadas: la de vendidas (v2.4.0), las dos de la tarea 001 (v2.5.0) y
   la de funciones de ventas (v2.8.0). El visitante solo lee las columnas
@@ -32,9 +33,8 @@ el detalle de cada cambio. **Actualizado: 2026-11-16.**
    con varias fotos del celular (tiene que aparecer "N fotos listas ·
    X MB" bajo el campo) y borrar una con el ✕ al editar (tiene que
    desaparecer solo esa foto). No se pudo probar sin el login.
-2. **Tarea aprobada: 003** (lotes; detalle en `tareas/`). Arranca
-   cuando Capi la pide. Puede usar `MiniaturaProducto` (v2.7.0) y
-   `formatFecha()` / `hoyAR()` de `src/lib/fechas.ts` (v2.8.0).
+2. **No quedan tareas aprobadas**: las cuatro (002, 004, 005 y 003)
+   están hechas. Ideas sin tarea en `tareas/BACKLOG.md`.
 3. **Posible tarea (a proponer por Cowork)** — permisos por defecto de
    las tablas nuevas: Supabase le sigue dando todos los permisos a anon
    en cada tabla que se cree. Hasta resolverlo, revisar los permisos en
@@ -42,10 +42,8 @@ el detalle de cada cambio. **Actualizado: 2026-11-16.**
 4. **Posible tarea (riesgo bajo)** — las fotos de productos ocultos
    siguen en el bucket público; sus URLs llevan un UUID. Quedó fuera de
    alcance de la 001.
-5. **Para la 003** (nota de la revisión de la 002): las fechas de lotes
-   (`fechaCorta()`) y el selector de lote del formulario de producto
-   todavía usan `toLocaleDateString` sin zona horaria. Hay que pasarlos
-   a `formatFecha()`.
+5. **Capi — fecha del lote #1**: sigue en 14/11/2026 (la de su
+   recreación). Se puede corregir desde la edición del lote.
 
 ## Cómo trabajar en este repo (para las dos sesiones)
 
@@ -88,6 +86,54 @@ Las versiones de la app nueva arrancan en 2.0 (la app vieja en Flask
 llegó a V1.1.0). Tags de git: `first_version` y `v1.0` son de la app
 Flask vieja; `v2.0.0` marca el arranque de la app nueva (`b7c5ad3`). Las
 versiones 2.1.0 en adelante no tienen tag; cada una lista sus commits.
+
+### v2.9.0 — Lotes: ver sus gorras, asignar de a muchas, repartir envío y fechas (2026-11-16)
+Tarea 003. Commit `ca899f9` (Claude Code). Sin cambios de base. Revisada
+por Cowork y probada por Capi en la vista previa antes del merge. Deploy
+a producción el 2026-11-16.
+
+- **Por qué**: el 13/11 Capi tocó "Eliminar" queriendo editar el lote 1
+  (estaba pegado a "Editar" y sin confirmación). El lote se borró, las 50
+  gorras quedaron sin lote y Next mostró el 404 genérico. La 002 agregó la
+  confirmación; Cowork recreó el lote #1 el 14/11; esta tarea arregla el
+  resto.
+- **Algo que ya no existe**: `not-found.tsx` en `lotes/[id]`,
+  `productos/[id]` y el panel, con el componente `NoExiste`. Muestran
+  "Este lote ya no existe" / "Esta gorra ya no existe" dentro del panel,
+  con un botón para volver.
+- **El lote muestra sus gorras**:
+  - Listado: hasta 6 miniaturas y "+N" (componente `TarjetaLote`).
+  - Edición: la lista completa (`GorrasDelLote`) con foto, ref., stock y
+    envío por unidad. El ✕ saca una gorra del lote, con confirmación.
+- **Asignar de a muchas** (`AsignarGorras`): grilla con foto, buscador y
+  casillas, con las gorras sin lote primero. "Asignar N gorras" llama a
+  `asignarLote` con un solo UPDATE. `quitarDelLote` solo saca la gorra si
+  sigue en ese lote.
+- **Repartir envío**: costo de envío guardado del lote ÷ cantidad de
+  gorras, redondeado a pesos enteros (`envioPorGorra` en
+  `src/lib/lotes.ts`), en cada gorra del lote. Antes de aplicarlo,
+  confirma con la cuenta. El precio sugerido se recalcula; el precio de
+  venta no cambia.
+- **Fecha del lote editable**: por defecto hoy en hora argentina, sin
+  fechas futuras. Si al editar no cambia el día, la fecha guardada no se
+  toca. `fechaVenta()` pasó a llamarse `fechaParaGuardar()`, compartida
+  con ventas.
+  - Crear un lote ahora lleva a su edición, y guardar la edición se
+    queda ahí.
+- **Fechas en hora argentina** en lotes y en el selector de lote del
+  formulario de producto. Ya no queda ningún `toLocaleDateString` sin
+  zona en el admin.
+- **Verificado**:
+  - Lógica: 15 comprobaciones (reparto y fecha del lote).
+  - Interfaz en Chrome sin ventana: 46 comprobaciones.
+  - Prueba de Capi en la vista previa.
+  - Antes del merge, en la base: 1 lote, 50 gorras en el lote #1, 0 sin
+    lote, el lote de prueba borrado.
+  - Después del deploy: el inicio muestra las 50 gorras y `/admin` sin
+    sesión lleva al login.
+- **Datos**: durante la prueba, el envío del lote #1 pasó de $ 20.500 a
+  $ 21.000 desde el panel y se repartió: cada gorra tiene $ 420 de envío
+  (antes $ 410).
 
 ### v2.8.0 — Ventas: selector con foto, fecha de venta y anular (2026-11-16)
 Tarea 005. Commit `06c36fc` (Claude Code), más la migración 005, que
