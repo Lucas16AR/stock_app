@@ -2,7 +2,7 @@
 
 Archivo de traspaso entre sesiones (Claude Code local y Cowork). Arriba
 está el estado actual y lo pendiente; abajo, el historial por versión con
-el detalle de cada cambio. **Actualizado: 2026-11-16.**
+el detalle de cada cambio. **Actualizado: 2026-11-17.**
 
 > El repo de GitHub es **público**: no escribas acá emails, contraseñas
 > ni datos personales.
@@ -11,18 +11,19 @@ el detalle de cada cambio. **Actualizado: 2026-11-16.**
 
 ## Estado actual
 
-- **Producción**: https://stock-app-six-woad.vercel.app — sana, versión
-  **v2.9.0** (código en `ca899f9`).
+- **Producción**: https://stock-app-six-woad.vercel.app — versión
+  **v2.10.0** (código en `5b6a8ce`).
 - **Git**: `master` local = `origin/master`, sin ramas de tarea
   abiertas. Único deploy: Vercel (proyecto `stock-app`). Cada push a
   `master` redeploya solo.
-- **Base (Supabase `stockAPP`)**: activa. 50 productos, todos visibles y
-  con stock, todos en el lote #1 (envío $ 21.000, repartido: $ 420 por
-  gorra desde el 2026-11-16). Sin ventas registradas: Capi anuló a propósito las 2 ventas
-  del 12/11 (gorras 59 y 60) el 2026-11-16. Todas las migraciones están
-  aplicadas: la de vendidas (v2.4.0), las dos de la tarea 001 (v2.5.0) y
-  la de funciones de ventas (v2.8.0). El visitante solo lee las columnas
-  públicas y no puede escribir nada ni usar las funciones de ventas.
+- **Base (Supabase `stockAPP`)**: activa. 49 gorras (la NY 12 con 2
+  unidades), un solo lote (#1, envío $ 21.000): 49 compras, **50
+  unidades**, todas con $ 420 de envío. Stock total 16 y 34 ventas, todas
+  con su costo guardado. Ninguna gorra descuadrada (stock + vendidas =
+  compradas). Todas las migraciones están aplicadas: vendidas (v2.4.0),
+  las dos de la 001 (v2.5.0), funciones de ventas (v2.8.0) y compras
+  (v2.10.0). El visitante solo lee las columnas públicas y no puede
+  escribir nada, ni leer compras, ni usar las funciones.
 - **Cron keepalive**: funcionando. Primera ejecución automática
   confirmada el 2026-11-11 a las 12:00 UTC en los logs de Supabase
   (`HEAD /rest/v1/categorias?select=id` → 200).
@@ -33,8 +34,9 @@ el detalle de cada cambio. **Actualizado: 2026-11-16.**
    con varias fotos del celular (tiene que aparecer "N fotos listas ·
    X MB" bajo el campo) y borrar una con el ✕ al editar (tiene que
    desaparecer solo esa foto). No se pudo probar sin el login.
-2. **No quedan tareas aprobadas**: las cuatro (002, 004, 005 y 003)
-   están hechas. Ideas sin tarea en `tareas/BACKLOG.md`.
+2. **No quedan tareas aprobadas**: de la 001 a la 006 están hechas.
+   Capi ya puede cargar el lote nuevo (recompras desde "Cargar gorras" →
+   "Ya la tengo"). Ideas sin tarea en `tareas/BACKLOG.md`.
 3. **Posible tarea (a proponer por Cowork)** — permisos por defecto de
    las tablas nuevas: Supabase le sigue dando todos los permisos a anon
    en cada tabla que se cree. Hasta resolverlo, revisar los permisos en
@@ -86,6 +88,53 @@ Las versiones de la app nueva arrancan en 2.0 (la app vieja en Flask
 llegó a V1.1.0). Tags de git: `first_version` y `v1.0` son de la app
 Flask vieja; `v2.0.0` marca el arranque de la app nueva (`b7c5ad3`). Las
 versiones 2.1.0 en adelante no tienen tag; cada una lista sus commits.
+
+### v2.10.0 — Compras por gorra: recompras, costo promedio y envío por lote (2026-11-17)
+Tarea 006. Commit `5b6a8ce` (Claude Code). **Con migración**
+(`20261117000001_006_compras.sql`), aplicada y verificada por Cowork
+antes del deploy. Revisada por Cowork y probada por Capi en la vista
+previa antes del merge. Deploy a producción el 2026-11-17.
+
+- **Por qué**: Capi va a recomprar modelos, con más stock y a otros
+  precios, en lotes distintos. Antes una gorra tenía un solo costo y un
+  solo lote: recomprar obligaba a pisar el costo o a crear una gorra
+  repetida (dos tarjetas iguales en la tienda). El lote contaba filas en
+  vez de unidades (49 en vez de 50) y la ganancia usaba el costo de hoy.
+- **Tabla `compras`**: cada ingreso de unidades de una gorra (lote,
+  unidades, precio, envío y extra por unidad, ref.). Backfill: una compra
+  por gorra con stock + vendidas.
+- **Stock y costos los mantiene la base**:
+  - `registrar_compra`, `actualizar_compra`, `anular_compra` y
+    `eliminar_lote` tocan el stock y recalculan todo en una sola
+    transacción.
+  - El costo de la gorra es el **promedio ponderado** de sus compras,
+    guardado en las columnas de siempre (`recalcular_costos`).
+  - El envío de un lote se reparte solo por unidad
+    (`repartir_envio_lote`); ya no hay botón "Repartir envío".
+  - `registrar_venta` guarda el costo de la gorra en
+    `ventas.costo_unitario`, y la ganancia del dashboard usa ese valor.
+- **Lote**: "50 gorras compradas · 49 modelos · Invertido …", lista de
+  compras para corregir o anular, y "Cargar gorras": "Ya la tengo"
+  (recompra) o "Gorra nueva" (vuelve al lote al guardar).
+- **Gorra nueva**: con su primera compra (obligatoria) y aviso de
+  posible duplicado mientras se escribe el nombre o la ref.
+- **Edición de la gorra**: stock y costos de solo lectura, sus compras y
+  "+ Sumar compra". Margen y precio de venta siguen editables.
+- **Listados**: lotes con "50 gorras · 49 modelos"; chip "2 compras" en
+  Productos e Inventario.
+- **Se fueron**: `asignarLote`, `quitarDelLote`, `repartirEnvio`,
+  `AsignarGorras` y `GorrasDelLote`.
+- **Verificado**:
+  - Migración en PGlite: 73 comprobaciones (backfill, recompra,
+    promedio, envío, anular, corregir, borrar lote, atomicidad, anon).
+  - Lógica: 7 pruebas. Interfaz en Chrome sin ventana a 390 y 1280 px.
+  - En producción, Cowork: 49 compras, 50 unidades a $ 420, 0 gorras
+    descuadradas, ventas con costo, anon sin acceso.
+  - Prueba de Capi en la vista previa (recompra de la NY 12 en un lote
+    de prueba, anularla y borrar el lote). Después, la base quedó como
+    antes.
+- **Queda en el backlog**: herramienta de pruebas en el repo (con las
+  migraciones en PGlite) y fecha elegible para compras sin lote.
 
 ### v2.9.0 — Lotes: ver sus gorras, asignar de a muchas, repartir envío y fechas (2026-11-16)
 Tarea 003. Commit `ca899f9` (Claude Code). Sin cambios de base. Revisada
@@ -464,6 +513,9 @@ Commit `b7c5ad3`.
 - Las gorras vendidas siguen visibles con el cartel "Vendida" (v2.4.0).
 - El precio que ve el cliente se carga a mano; el margen es solo
   referencia (v2.3.0).
+- Una recompra se carga como compra de la misma gorra, no como gorra
+  repetida. El costo de la gorra es el **promedio ponderado** de sus
+  compras; las recompras se cargan **desde el lote** (v2.10.0).
 
 ## Infraestructura
 
