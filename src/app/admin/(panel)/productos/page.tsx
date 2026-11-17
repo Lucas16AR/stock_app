@@ -17,6 +17,7 @@ type ProductoConsulta = {
   fotos_producto: { path: string; orden: number }[] | null;
   categorias: { nombre: string }[] | null;
   ventas: { count: number }[] | null;
+  compras: { count: number }[] | null;
 };
 
 // Parte de datos: hace el select y le pasa a la lista (cliente) solo lo
@@ -27,7 +28,7 @@ export default async function ProductosPage() {
   const { data, error } = await supabase
     .from("productos")
     .select(
-      "id, nombre, ref_interna, cantidad, precio_venta, visible_publico, lote_id, fotos_producto(path, orden), categorias(nombre), ventas(count)"
+      "id, nombre, ref_interna, cantidad, precio_venta, visible_publico, lote_id, fotos_producto(path, orden), categorias(nombre), ventas(count), compras(count)"
     )
     .order("fecha_creacion", { ascending: false })
     .returns<ProductoConsulta[]>();
@@ -44,6 +45,7 @@ export default async function ProductosPage() {
     categorias: (p.categorias ?? []).map((c) => c.nombre),
     fotos: p.fotos_producto?.length ?? 0,
     ventas: p.ventas?.[0]?.count ?? 0,
+    compras: p.compras?.[0]?.count ?? 0,
   }));
 
   return (

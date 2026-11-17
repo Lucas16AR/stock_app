@@ -6,16 +6,25 @@ Proyecto Supabase: **stockAPP** (región `sa-east-1`, org `Lucas16AR's Org`).
 
 - **`categorias`** — `id`, `nombre` (único).
 - **`lotes`** — lotes de compra. `id`, `fecha`, `costo_envio`, `nota`.
-- **`productos`** — `id`, `nombre`, `descripcion`, `cantidad` (stock),
-  `precio_compra`, `costo_envio_unitario`, `costo_extra`, `margen`
+- **`productos`** — una gorra = una tarjeta en la tienda. `id`,
+  `nombre`, `descripcion`, `cantidad` (stock; desde la 006 solo lo tocan
+  las funciones de compras y ventas), `precio_compra`,
+  `costo_envio_unitario`, `costo_extra` (desde la 006 son un **caché**:
+  el promedio ponderado de sus compras, ver abajo), `margen`
   (0 a 5, ej. `0.5` = 50%, **solo de referencia interna, nunca se
   muestra al público**), `precio_venta` (numeric, el precio real que
   ve el cliente — se carga a mano en el panel admin, no se calcula
-  solo), `lote_id` (FK a `lotes`, `SET NULL` on delete),
-  `ref_interna` (text, nullable — referencia de compra, ej. `AFA 12`;
-  **solo admin**, antes vivía como una línea `Ref. interna: …` dentro de
-  `descripcion`), `visible_publico` (bool, default `true`),
-  `fecha_creacion`.
+  solo), `lote_id` (FK a `lotes`, `SET NULL` on delete; desde la 006 es
+  un caché: el lote de la **última compra**, para el filtro "Sin lote"),
+  `ref_interna` (text, nullable — ref. principal de la gorra, ej. `AFA
+  12`; **solo admin**; cada compra tiene la suya), `visible_publico`
+  (bool, default `true`), `fecha_creacion`.
+- **`compras`** (tarea 006) — cada ingreso de unidades de una gorra.
+  `id`, `producto_id` (FK, `CASCADE`), `lote_id` (FK, `SET NULL`),
+  `unidades` (> 0), `precio_compra`, `costo_envio_unitario`,
+  `costo_extra` (los tres por unidad, >= 0), `ref_interna` (la de esa
+  compra), `fecha` (la del lote, o `now()` sin lote). **No se escribe
+  directo**: pasa por las funciones de abajo.
 - **`producto_categoria`** — tabla intermedia muchos-a-muchos
   (`producto_id`, `categoria_id`), habilita el embedding implícito de
   PostgREST (`select("*, categorias(*)")` funciona directo).
@@ -24,9 +33,11 @@ Proyecto Supabase: **stockAPP** (región `sa-east-1`, org `Lucas16AR's Org`).
   producto (`MAX_FOTOS_POR_PRODUCTO` en `src/lib/fotos.ts`, validado en la
   server action, no en la base).
 - **`ventas`** — `id`, `producto_id` (FK, `RESTRICT`), `cantidad`,
-  `precio_venta`, `fecha` (timestamptz). Desde la tarea 005 **no se
-  escribe directo**: registrar y anular pasan por las funciones de abajo,
-  que tocan el stock en la misma transacción (no hay trigger).
+  `precio_venta`, `fecha` (timestamptz), `costo_unitario` (006: el costo
+  de la gorra al venderse; la ganancia del dashboard usa este valor, así
+  una recompra a otro precio no cambia ventas viejas). Desde la tarea 005
+  **no se escribe directo**: registrar y anular pasan por las funciones
+  de abajo, que tocan el stock en la misma transacción (no hay trigger).
 
 ## Funciones (tarea 005)
 
@@ -48,6 +59,57 @@ La server action manda `p_fecha` solo si la venta no es de hoy: en ese
 caso, el mediodía de ese día en Argentina (`fechaParaGuardar()` en
 `src/lib/fechas.ts`). Los errores se traducen en `src/lib/ventas.ts`.
 Una función nueva necesita el mismo `revoke ... from public, anon`.
+
+## Compras, costo promedio y envío por lote (tarea 006)
+
+`supabase/migrations/20261117000001_006_compras.sql`. Todas
+`SECURITY INVOKER`, con `EXECUTE` solo para `authenticated`.
+
+- **Stock:** `productos.cantidad` sigue siendo el stock, pero solo lo
+  cambian `registrar_compra` / `actualizar_compra` / `anular_compra` y
+  `registrar_venta` / `anular_venta`. El formulario de producto ya no lo
+  edita.
+- **Costo de la gorra = promedio ponderado de sus compras** (por
+  unidades), una columna por componente. Ej.: 2 a $ 8.000 + 3 a $ 9.500
+  → $ 8.900. Lo guarda `recalcular_costos(p_producto_id)` en las columnas
+  de `productos` (y el lote de la última compra en `lote_id`). Una gorra
+  sin compras queda sin lote y con los costos como estaban.
+- **Envío de un lote, automático:** cada compra del lote lleva
+  `round(lotes.costo_envio / unidades de las compras del lote)` por
+  unidad. Lo hace `repartir_envio_lote(p_lote_id)`, que llaman las
+  funciones de compras y la server action al guardar un lote. Las
+  compras sin lote tienen el envío cargado a mano.
+- **Venta con costo congelado:** `registrar_venta` (misma firma que en
+  la 005) guarda en `ventas.costo_unitario` el costo de la gorra en ese
+  momento.
+
+Funciones:
+- **`registrar_compra(p_producto_id, p_lote_id, p_unidades, p_precio,
+  p_extra default 0, p_ref default null, p_envio default 0)`** → id.
+  Suma las unidades al stock, recalcula el costo y reparte el envío del
+  lote (en un lote, `p_envio` se ignora).
+- **`actualizar_compra(p_compra_id, p_unidades, p_precio, p_extra,
+  p_ref, p_envio)`**: corrige una compra. Si cambian las unidades, el
+  stock cambia por la diferencia y no puede quedar negativo. El envío
+  solo se toma si la compra no tiene lote. No cambia el lote (para eso,
+  anular y cargar de nuevo).
+- **`anular_compra(p_compra_id)`**: borra la compra y saca sus unidades
+  del stock, si todavía están (si el stock es menor, ya se vendieron).
+- **`eliminar_lote(p_lote_id)`**: borra el lote; sus compras quedan sin
+  lote con el último envío calculado y se recalcula el `lote_id` de
+  esas gorras. Las gorras y su stock no cambian.
+- `recalcular_costos` y `repartir_envio_lote` (las de arriba).
+
+Errores (`mensajeErrorCompra()` en `src/lib/compras.ts`):
+`unidades_invalidas`, `precio_invalido`, `producto_no_encontrado`,
+`lote_no_encontrado`, `compra_no_encontrada` y
+`unidades_vendidas:<stock>`.
+
+Borrar una gorra (solo si no tiene ventas) borra sus compras en cascada;
+la server action reparte de nuevo el envío de esos lotes.
+
+**Costo promedio, no FIFO:** no se sabe de qué compra salió cada unidad
+vendida. Por eso anular una compra solo mira el stock total de la gorra.
 
 ## Margen vs. precio de venta
 
@@ -82,9 +144,9 @@ Todas las tablas tienen RLS habilitado:
   - `categorias`: sin restricción, a propósito. El showroom la consulta
     suelta para armar el filtro de categorías y los nombres no son
     sensibles.
-- **Sin lectura pública**: `ventas` y `lotes` (datos de venta y costos de
-  compra son inaccesibles para anónimos).
-- **Todo permitido** para `authenticated` (el panel admin) en las 6
+- **Sin lectura pública**: `ventas`, `lotes` y `compras` (datos de venta
+  y costos de compra son inaccesibles para anónimos).
+- **Todo permitido** para `authenticated` (el panel admin) en las 7
   tablas — no hay un rol "admin" separado, cualquier usuario logueado
   vía Supabase Auth tiene acceso total. Como no hay self-signup, la
   única forma de entrar es con un usuario creado a mano.
@@ -101,7 +163,7 @@ producción el 2026-11-14):
   costos, el margen, `lote_id` y `ref_interna` no son legibles; un
   `select=*` como anon da *permission denied* (42501).
 - `fotos_producto`, `producto_categoria`, `categorias`: solo `SELECT`.
-- `lotes`, `ventas`: ningún permiso.
+- `lotes`, `ventas`, `compras` (y su secuencia): ningún permiso.
 - Sin `INSERT`/`UPDATE`/`DELETE`/`TRUNCATE` para anon en ninguna tabla.
 
 Consecuencias para el código:

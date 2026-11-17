@@ -39,6 +39,7 @@ export default function LoteForm({
           defaultValue={lote?.costo_envio ?? 0}
           className={campo}
         />
+        <p className="mt-1 text-xs text-muted">Se reparte solo entre las gorras del lote, por unidad.</p>
       </div>
       <div>
         <label htmlFor="lote-nota" className="mb-1 block text-xs text-muted">Nota (opcional)</label>

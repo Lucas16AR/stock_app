@@ -6,6 +6,7 @@ import { coincide, textoBuscable } from "@/lib/busqueda";
 import { formatARS } from "@/lib/pricing";
 import Buscador from "./Buscador";
 import MiniaturaProducto from "./MiniaturaProducto";
+import ChipCompras from "./ChipCompras";
 
 export type FilaInventario = {
   id: number;
@@ -17,6 +18,7 @@ export type FilaInventario = {
   valor: number;
   foto: string | null;
   categorias: string[];
+  compras: number;
 };
 
 const GRILLA =
@@ -82,7 +84,12 @@ function FilaListaInventario({ p }: { p: FilaInventario }) {
         <div className="min-w-0 flex-1 md:contents">
           <div className="min-w-0">
             <span className="block truncate text-sm font-semibold text-foreground">{p.nombre}</span>
-            {p.ref_interna && <span className="block truncate text-xs text-muted">{p.ref_interna}</span>}
+            {(p.ref_interna || p.compras > 1) && (
+              <span className="flex items-center gap-1.5 text-xs text-muted">
+                {p.ref_interna && <span className="truncate">{p.ref_interna}</span>}
+                <ChipCompras compras={p.compras} />
+              </span>
+            )}
           </div>
           {/* En el celular: stock a la derecha del nombre; costo y sugerido abajo. */}
           <span className="hidden text-sm md:block">

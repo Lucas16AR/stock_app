@@ -74,6 +74,8 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
     `<Avisos />` va una sola vez en el layout del panel.
   - Clases de botón en `estilos.ts` (`btnPrimario`, `btnSecundario`,
     `btnBorrarIcono`, `btnIcono`), todas con `active:scale-95`.
+  - `BotonBorrar` acepta `tituloBloqueo` cuando la acción no es borrar
+    (ej. "No se puede anular esta compra").
   - `MiniaturaProducto` — foto cuadrada de la gorra en los listados (o
     ícono de gorra si no tiene). La portada sale de `primeraFoto()`
     (`src/lib/fotos.ts`).
@@ -93,10 +95,32 @@ admin protegido con login para cargar stock, lotes de compra y ventas.
   `toLocaleDateString` sin `timeZone`. Un día elegido en un formulario
   (venta, lote) se guarda con `fechaParaGuardar()`: si es hoy, `now()`;
   si no, el mediodía de ese día en Argentina.
-- **Lotes**: las gorras se asignan desde la edición del lote, de a muchas
-  (`asignarLote`). "Repartir envío" pone en cada gorra del lote el costo
-  de envío dividido por la cantidad, redondeado a pesos (`envioPorGorra`
-  en `src/lib/lotes.ts`).
+- **Compras (tarea 006)**: cada ingreso de unidades de una gorra es una
+  fila de `compras` (lote, unidades, precio, envío y extra por unidad,
+  ref.). Nunca se escribe directo en `compras`, ni en `cantidad`,
+  `precio_compra`, `costo_envio_unitario`, `costo_extra` o `lote_id` de
+  `productos`: se usan `registrar_compra` / `actualizar_compra` /
+  `anular_compra` / `eliminar_lote` / `repartir_envio_lote` con
+  `supabase.rpc`, que mantienen el stock, el **costo promedio
+  ponderado** de la gorra y el **envío repartido por unidad** del lote
+  (ver `docs/SCHEMA.md`). Sus errores se traducen con
+  `mensajeErrorCompra()` y los campos de un formulario de compra
+  (`compra_*`) se leen con `leerCompra()` (`src/lib/compras.ts`).
+  - Una recompra se carga como compra nueva de la misma gorra (desde el
+    lote con "Cargar gorras" → "Ya la tengo", o desde la gorra con
+    "+ Sumar compra"), **no** como gorra repetida: la tienda tiene que
+    mostrar una sola tarjeta. Al crear una gorra, `NombreConAviso`
+    muestra las parecidas (`parecidas()` de `src/lib/busqueda.ts`).
+  - Componentes: `CamposCompra` (los campos, con el envío estimado si
+    hay lote), `ListaCompras` (corregir / anular), `CargarGorras`,
+    `SumarCompra`, `PrimeraCompra` (gorra nueva) y `ChipCompras`.
+  - La ganancia usa `ventas.costo_unitario` (el costo al venderse).
+- **Lotes**: un lote se cuenta por sus compras: "50 gorras · 49
+  modelos" (`resumenCompras()`). El envío se reparte solo al cargar,
+  corregir o anular una compra y al guardar el lote (`actualizarLote`
+  llama a `repartir_envio_lote`); no hay botón de repartir.
+  `envioPorGorra()` (`src/lib/lotes.ts`) hace la misma cuenta que la
+  base, solo para mostrarla.
 - Los listados con interacción se separan en dos: la página (server
   component) hace el select y arma filas planas; la lista (client
   component, ej. `ListaProductos`) busca, filtra y dibuja. En el celular

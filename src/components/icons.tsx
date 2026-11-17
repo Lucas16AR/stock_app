@@ -125,3 +125,13 @@ export function UndoIcon({ className }: { className?: string }) {
     </IconoTrazo>
   );
 }
+
+// Lápiz: corregir una compra.
+export function PencilIcon({ className }: { className?: string }) {
+  return (
+    <IconoTrazo className={className}>
+      <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+      <path d="m13.5 6.5 4 4" />
+    </IconoTrazo>
+  );
+}

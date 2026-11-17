@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Lote } from "@/lib/types";
 import { formatARS } from "@/lib/pricing";
 import { plural } from "@/lib/acciones";
+import { resumenCompras, textoCompras } from "@/lib/compras";
 import { primeraFoto } from "@/lib/fotos";
 import { formatFecha, formatFechaCorta } from "@/lib/fechas";
 import { eliminarLote } from "@/app/admin/(panel)/actions";
@@ -12,14 +13,28 @@ import { btnSecundario } from "./estilos";
 // Cuántas miniaturas se muestran por lote en el listado.
 const MINIATURAS = 6;
 
-export type LoteConGorras = Lote & {
-  productos: { id: number; nombre: string; fotos_producto: { path: string; orden: number }[] | null }[] | null;
+export type LoteConCompras = Lote & {
+  compras:
+    | {
+        producto_id: number;
+        unidades: number;
+        precio_compra: number;
+        costo_extra: number;
+        productos: { id: number; nombre: string; fotos_producto: { path: string; orden: number }[] | null } | null;
+      }[]
+    | null;
 };
 
-// Un lote en el listado de lotes: fecha, envío, nota, miniaturas de sus
-// gorras (hasta 6 y "+N") y los botones de editar y borrar.
-export default function TarjetaLote({ lote: l }: { lote: LoteConGorras }) {
-  const gorras = [...(l.productos ?? [])].sort((a, b) => a.id - b.id);
+// Un lote en el listado de lotes: fecha, envío, unidades compradas y
+// modelos (contados por sus compras), nota, miniaturas de sus gorras
+// (hasta 6 y "+N") y los botones de editar y borrar.
+export default function TarjetaLote({ lote: l }: { lote: LoteConCompras }) {
+  const compras = l.compras ?? [];
+  const resumen = resumenCompras(compras);
+  // Una miniatura por gorra, aunque tenga más de una compra en el lote.
+  const gorras = [...new Map(compras.flatMap((c) => (c.productos ? [[c.productos.id, c.productos] as const] : []))).values()].sort(
+    (a, b) => a.id - b.id
+  );
   const muestra = gorras.slice(0, MINIATURAS);
   const resto = gorras.length - muestra.length;
   return (
@@ -30,7 +45,14 @@ export default function TarjetaLote({ lote: l }: { lote: LoteConGorras }) {
             Lote #{l.id} — {formatFecha(l.fecha)}
           </p>
           <p className="text-sm text-muted">
-            Envío {formatARS(l.costo_envio)} · {plural(gorras.length, "gorra")}
+            <span className="whitespace-nowrap">Envío {formatARS(l.costo_envio)}</span> ·{" "}
+            <span className="whitespace-nowrap font-semibold text-foreground">{plural(resumen.unidades, "gorra")}</span>
+            {resumen.modelos > 0 && (
+              <>
+                {" · "}
+                <span className="whitespace-nowrap">{plural(resumen.modelos, "modelo")}</span>
+              </>
+            )}
           </p>
           {l.nota && <p className="truncate text-sm text-muted">{l.nota}</p>}
         </Link>
@@ -43,14 +65,14 @@ export default function TarjetaLote({ lote: l }: { lote: LoteConGorras }) {
             accion={eliminarLote.bind(null, l.id)}
             etiqueta={`Borrar el lote #${l.id}`}
             titulo={
-              gorras.length > 0
+              resumen.compras > 0
                 ? `¿Borrar el lote #${l.id} del ${formatFechaCorta(l.fecha)}?`
                 : `¿Borrar el lote #${l.id}?`
             }
             detalle={
-              gorras.length > 0
-                ? `Tiene ${plural(gorras.length, "gorra")}: van a quedar sin lote. Las gorras no se borran.`
-                : "No tiene gorras asignadas."
+              resumen.compras > 0
+                ? `Tiene ${textoCompras(resumen.compras, resumen.unidades)}. Las compras quedan sin lote; las gorras y su stock no cambian.`
+                : "No tiene gorras cargadas."
             }
           />
         </div>
@@ -76,7 +98,7 @@ export default function TarjetaLote({ lote: l }: { lote: LoteConGorras }) {
         <p className="text-sm text-muted">
           Sin gorras.{" "}
           <Link href={`/admin/lotes/${l.id}`} className="font-semibold text-accent hover:underline">
-            Agregarle gorras
+            Cargarle gorras
           </Link>
         </p>
       )}

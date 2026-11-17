@@ -9,13 +9,14 @@ export const revalidate = 0;
 type ProductoConsulta = Producto & {
   fotos_producto: { path: string; orden: number }[] | null;
   categorias: { nombre: string }[] | null;
+  compras: { count: number }[] | null;
 };
 
 export default async function InventarioPage() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("productos")
-    .select("*, fotos_producto(path, orden), categorias(nombre)")
+    .select("*, fotos_producto(path, orden), categorias(nombre), compras(count)")
     .order("nombre")
     .returns<ProductoConsulta[]>();
 
@@ -32,6 +33,7 @@ export default async function InventarioPage() {
       valor: costo * p.cantidad,
       foto: primeraFoto(p.fotos_producto)?.path ?? null,
       categorias: (p.categorias ?? []).map((c) => c.nombre),
+      compras: p.compras?.[0]?.count ?? 0,
     };
   });
 

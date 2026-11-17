@@ -3,28 +3,68 @@ import { notFound } from "next/navigation";
 import { EyeIcon } from "@/components/icons";
 import { btnSecundario } from "@/components/admin/estilos";
 import { createClient } from "@/lib/supabase/server";
-import { Categoria, Lote, Producto } from "@/lib/types";
+import { Categoria, Compra, Producto } from "@/lib/types";
+import { primeraFoto } from "@/lib/fotos";
 import ProductForm from "@/components/admin/ProductForm";
+import ListaCompras, { type FilaCompra } from "@/components/admin/ListaCompras";
+import SumarCompra from "@/components/admin/SumarCompra";
+import type { LoteOpcion } from "@/components/admin/CamposCompra";
 import { actualizarProducto } from "../../actions";
 
-export default async function EditarProductoPage(
-  props: PageProps<"/admin/productos/[id]">
-) {
+type ProductoConsulta = Producto & { compras: Compra[] | null; ventas: { cantidad: number }[] | null };
+type LoteConsulta = { id: number; fecha: string; nota: string | null; costo_envio: number; compras: { unidades: number }[] | null };
+
+export default async function EditarProductoPage(props: PageProps<"/admin/productos/[id]">) {
   const { id } = await props.params;
+  const { sumar } = await props.searchParams;
   const supabase = await createClient();
 
-  const [{ data: productoData }, { data: categorias }, { data: lotes }] = await Promise.all([
+  const [{ data: productoData }, { data: categorias }, { data: lotesData }] = await Promise.all([
     supabase
       .from("productos")
-      .select("*, fotos_producto(*), categorias(*)")
+      .select("*, fotos_producto(*), categorias(*), compras(*), ventas(cantidad)")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("categorias").select("*").order("nombre").returns<Categoria[]>(),
-    supabase.from("lotes").select("*").order("fecha", { ascending: false }).returns<Lote[]>(),
+    supabase
+      .from("lotes")
+      .select("id, fecha, nota, costo_envio, compras(unidades)")
+      .order("fecha", { ascending: false })
+      .returns<LoteConsulta[]>(),
   ]);
 
-  const producto = productoData as Producto | null;
+  const producto = productoData as ProductoConsulta | null;
   if (!producto) notFound();
+
+  const lotes: LoteOpcion[] = (lotesData ?? []).map((l) => ({
+    id: l.id,
+    fecha: l.fecha,
+    nota: l.nota,
+    costo_envio: Number(l.costo_envio),
+    unidades: (l.compras ?? []).reduce((suma, c) => suma + c.unidades, 0),
+  }));
+  const loteDe = new Map(lotes.map((l) => [l.id, l]));
+  const foto = primeraFoto(producto.fotos_producto)?.path ?? null;
+
+  const compras: FilaCompra[] = (producto.compras ?? [])
+    .map((c) => ({
+      id: c.id,
+      producto_id: producto.id,
+      nombre: producto.nombre,
+      foto,
+      ref: c.ref_interna,
+      unidades: c.unidades,
+      precio: Number(c.precio_compra),
+      envio: Number(c.costo_envio_unitario),
+      extra: Number(c.costo_extra),
+      fecha: c.fecha,
+      stock: producto.cantidad,
+      lote: c.lote_id ? (loteDe.get(c.lote_id) ?? null) : null,
+    }))
+    .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
+  const compradas = compras.reduce((suma, c) => suma + c.unidades, 0);
+  const vendidas = (producto.ventas ?? []).reduce((suma, v) => suma + v.cantidad, 0);
+  const ultima = compras[0];
 
   const actualizarConId = actualizarProducto.bind(null, producto.id);
 
@@ -57,11 +97,31 @@ export default async function EditarProductoPage(
       <div className="mt-4">
         <ProductForm
           producto={producto}
+          unidades={{ compradas, vendidas }}
           categorias={categorias ?? []}
-          lotes={lotes ?? []}
           action={actualizarConId}
         />
       </div>
+
+      <section id="compras" className="mt-8 flex max-w-2xl scroll-mt-20 flex-col gap-3">
+        <div>
+          <h2 className="font-display text-xl text-foreground">Compras de esta gorra</h2>
+          <p className="text-sm text-muted">
+            El stock y el costo promedio salen de acá. Una recompra se suma como compra nueva.
+          </p>
+        </div>
+        <SumarCompra
+          productoId={producto.id}
+          lotes={lotes}
+          abiertoInicial={sumar === "1"}
+          inicial={{
+            precio: Math.round(ultima?.precio ?? Number(producto.precio_compra)),
+            extra: Math.round(ultima?.extra ?? Number(producto.costo_extra)),
+            ref: producto.ref_interna,
+          }}
+        />
+        <ListaCompras compras={compras} modo="producto" vacio="Esta gorra no tiene compras cargadas." />
+      </section>
     </div>
   );
 }

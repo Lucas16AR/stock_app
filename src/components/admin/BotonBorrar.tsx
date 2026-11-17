@@ -14,6 +14,7 @@ import { btnBorrarIcono } from "./estilos";
 // - `titulo`: la pregunta ("¿Borrar el lote #3?").
 // - `detalle`: las consecuencias ("Tiene 12 gorras: van a quedar sin lote.").
 // - `bloqueo`: si viene, no se ofrece borrar; el diálogo explica por qué y
+//   (`tituloBloqueo`, por defecto "No se puede borrar")
 //   qué hacer en su lugar (ej. producto con ventas → ocultarlo).
 //
 // - `textoConfirmar` / `textoPendiente`: el botón del diálogo, por defecto
@@ -25,6 +26,7 @@ export default function BotonBorrar({
   titulo,
   detalle,
   bloqueo,
+  tituloBloqueo = "No se puede borrar",
   etiqueta,
   className = btnBorrarIcono,
   textoConfirmar = "Borrar",
@@ -36,12 +38,13 @@ export default function BotonBorrar({
   titulo: string;
   detalle?: string;
   bloqueo?: string;
+  tituloBloqueo?: string;
   etiqueta: string;
   className?: string;
   textoConfirmar?: string;
   textoPendiente?: string;
   // Sonido al salir bien: "borrado" (tono que baja) o "exito" (para
-  // confirmaciones que no borran nada, como repartir el envío).
+  // confirmaciones que no borran nada).
   tipoAviso?: "borrado" | "exito";
   children?: React.ReactNode;
 }) {
@@ -95,7 +98,7 @@ export default function BotonBorrar({
         }}
       >
         <div className="p-5">
-          <h2 className="text-base font-semibold text-foreground">{bloqueo ? "No se puede borrar" : titulo}</h2>
+          <h2 className="text-base font-semibold text-foreground">{bloqueo ? tituloBloqueo : titulo}</h2>
           {(bloqueo ?? detalle) && (
             <p className="mt-2 text-sm leading-relaxed text-muted">{bloqueo ?? detalle}</p>
           )}

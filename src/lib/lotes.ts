@@ -1,9 +1,8 @@
 import { esDiaValido, fechaParaGuardar, hoyAR } from "./fechas";
 
-// Costo de envío por gorra al repartir el envío de un lote, redondeado a
-// pesos enteros: así lo muestra todo el panel (formatARS no usa centavos)
-// y el valor que se ve en la confirmación es exactamente el que se guarda.
-// Lo usan la acción repartirEnvio y el diálogo de confirmación.
+// Envío por gorra de un lote: costo de envío / unidades compradas,
+// redondeado a pesos. Es la misma cuenta que hace la base
+// (repartir_envio_lote, migración 006); acá solo se usa para mostrarla.
 export function envioPorGorra(costoEnvio: number, gorras: number) {
   if (gorras <= 0) return 0;
   return Math.round(costoEnvio / gorras);

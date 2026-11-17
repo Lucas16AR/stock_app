@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import TarjetaLote, { type LoteConGorras } from "@/components/admin/TarjetaLote";
+import TarjetaLote, { type LoteConCompras } from "@/components/admin/TarjetaLote";
 import { btnPrimario } from "@/components/admin/estilos";
 
 export const revalidate = 0;
@@ -9,9 +9,10 @@ export default async function LotesPage() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("lotes")
-    .select("*, productos(id, nombre, fotos_producto(path, orden))")
+    // Se cuenta por compras: unidades compradas y modelos (migración 006).
+    .select("*, compras(producto_id, unidades, precio_compra, costo_extra, productos(id, nombre, fotos_producto(path, orden)))")
     .order("fecha", { ascending: false })
-    .returns<LoteConGorras[]>();
+    .returns<LoteConCompras[]>();
 
   const lotes = data ?? [];
 

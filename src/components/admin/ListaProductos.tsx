@@ -11,6 +11,7 @@ import Buscador from "./Buscador";
 import FiltrosRapidos from "./FiltrosRapidos";
 import MiniaturaProducto from "./MiniaturaProducto";
 import SwitchVisible from "./SwitchVisible";
+import ChipCompras from "./ChipCompras";
 import { btnSecundario } from "./estilos";
 
 // Lo que la página de Productos le pasa a la lista (ya armado en el
@@ -27,6 +28,7 @@ export type FilaProducto = {
   categorias: string[];
   fotos: number;
   ventas: number;
+  compras: number;
 };
 
 const FILTROS = [
@@ -127,7 +129,12 @@ function FilaListaProducto({ p }: { p: FilaProducto }) {
       <div className="min-w-0 flex-1 md:contents">
         <Link href={editar} className="block min-w-0 hover:text-accent">
           <span className="block truncate text-sm font-semibold text-foreground">{p.nombre}</span>
-          {p.ref_interna && <span className="block truncate text-xs text-muted">{p.ref_interna}</span>}
+          {(p.ref_interna || p.compras > 1) && (
+            <span className="flex items-center gap-1.5 text-xs text-muted">
+              {p.ref_interna && <span className="truncate">{p.ref_interna}</span>}
+              <ChipCompras compras={p.compras} />
+            </span>
+          )}
         </Link>
         <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-sm md:contents">
           <span className={vendida ? "text-muted" : "text-foreground"}>
@@ -162,7 +169,11 @@ function FilaListaProducto({ p }: { p: FilaProducto }) {
             accion={eliminarProducto.bind(null, p.id)}
             etiqueta={`Borrar «${p.nombre}»`}
             titulo={`¿Borrar «${p.nombre}»?`}
-            detalle={`Se borra el producto${p.fotos > 0 ? ` y sus ${plural(p.fotos, "foto")}` : ""}. No se puede deshacer.`}
+            detalle={`Se borra el producto${
+              p.fotos > 0 || p.compras > 0
+                ? ` con ${[p.fotos > 0 && plural(p.fotos, "foto"), p.compras > 0 && plural(p.compras, "compra")].filter(Boolean).join(" y ")}`
+                : ""
+            }. No se puede deshacer.`}
             bloqueo={p.ventas > 0 ? motivoNoBorrarProducto(p.ventas) : undefined}
           />
         </div>
